@@ -36,15 +36,6 @@ public final class F2InvokeCommand implements F2StyleOp {
             return state;
 
         F2CommandRef ref = registry.resolve(targetCall);
-
-        /*
-         * Временный вариант.
-         * Позже заменить на registry.styleProgram(ref.def())
-         * или ref.def().styleProgram().
-         */
-        F2StyleProgram program =
-                new F2StyleProgramCompiler().compile(ref.def());
-
-        return program.apply(ref.call(), state, registry);
+        return ref.def().styleProgram().apply(ref.call(), state, registry);
     }
 }
