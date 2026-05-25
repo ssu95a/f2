@@ -21,7 +21,7 @@ public final class F2StyledTextRun {
     }
 
     public boolean isEmpty() {
-        return text.length() == 0;
+        return text.isEmpty();
     }
 
     @Override

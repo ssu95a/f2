@@ -4,6 +4,7 @@ import ru.inversion.f2.command.F2CommandCall;
 import ru.inversion.f2.command.F2CommandEffect;
 import ru.inversion.f2.command.F2CommandProperty;
 import ru.inversion.f2.command.F2CommandRegistry;
+import ru.inversion.f2.control.F2ControlSink;
 
 public interface F2StyleOp {
 
@@ -17,6 +18,7 @@ public interface F2StyleOp {
     F2RenderState apply(
             F2CommandCall call,
             F2RenderState state,
-            F2CommandRegistry registry
+            F2CommandRegistry registry,
+            F2ControlSink control
     );
 }

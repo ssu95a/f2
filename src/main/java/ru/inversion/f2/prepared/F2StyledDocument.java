@@ -4,35 +4,47 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
-    Зона ответственности:
-    результат интерпретации prepared tokens: список styled lines.
-*/
 public final class F2StyledDocument {
 
-    private final List<F2StyledLine> lines;
+    private final List<F2StyledPage> pages;
 
-    public F2StyledDocument(List<F2StyledLine> lines)
-    {
-        if (lines == null || lines.isEmpty()) {
-            this.lines = Collections.emptyList();
+    public F2StyledDocument(List<F2StyledPage> pages) {
+        if (pages == null || pages.isEmpty()) {
+            this.pages = Collections.emptyList();
         }
         else {
-            this.lines = Collections.unmodifiableList(
-                    new ArrayList<F2StyledLine>(lines)
+            this.pages = Collections.unmodifiableList(
+                    new ArrayList<F2StyledPage>(pages)
             );
         }
     }
 
-    public List<F2StyledLine> lines() {
-        return lines;
+    public List<F2StyledPage> pages() {
+        return pages;
+    }
+
+    public int pageCount() {
+        return pages.size();
     }
 
     public boolean isEmpty() {
-        return lines.isEmpty();
+        return pages.isEmpty();
     }
 
+    /**
+     * Временный convenience для старых smoke-тестов.
+     */
+    public List<F2StyledLine> lines() {
+        if (pages.isEmpty())
+            return Collections.emptyList();
+
+        return pages.get(0).lines();
+    }
+
+    /**
+     * Временный convenience для старых smoke-тестов.
+     */
     public int lineCount() {
-        return lines.size();
+        return lines().size();
     }
 }

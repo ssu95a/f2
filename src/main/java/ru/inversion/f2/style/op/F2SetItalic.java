@@ -3,6 +3,7 @@ package ru.inversion.f2.style.op;
 import ru.inversion.f2.command.F2CommandCall;
 import ru.inversion.f2.command.F2CommandProperty;
 import ru.inversion.f2.command.F2CommandRegistry;
+import ru.inversion.f2.control.F2ControlSink;
 import ru.inversion.f2.style.F2RenderState;
 import ru.inversion.f2.style.F2StyleOp;
 
@@ -34,7 +35,8 @@ public final class F2SetItalic implements F2StyleOp {
     public F2RenderState apply(
             F2CommandCall call,
             F2RenderState state,
-            F2CommandRegistry registry
+            F2CommandRegistry registry,
+            F2ControlSink control
     ) {
         return state.withStyle(
                 state.style().withItalic(value)

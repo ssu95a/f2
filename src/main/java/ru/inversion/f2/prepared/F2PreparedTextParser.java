@@ -31,7 +31,7 @@ public final class F2PreparedTextParser {
                 int end = text.indexOf('`', i + 1);
 
                 if( end < 0 )
-                    throw F2Errors.of( F2Errors.ErrorCode.COMMAND_CALL_INVALID).param("reason", "Unclosed command quote").param("pos", Integer.valueOf(i)).param("text", text);
+                    throw F2Errors.of( F2Errors.ErrorCode.COMMAND_CALL_INVALID).param("reason", "Unclosed command quote").param( "pos", i ).param("text", text);
 
                 String commandText = text.substring(i, end + 1);
                 F2CommandCall call = F2CommandCallParser.parse(commandText);
@@ -76,7 +76,7 @@ public final class F2PreparedTextParser {
         return result;
     }
 
-    private static void flushText(List<F2PreparedToken> result, StringBuilder plain) {
+    private static void flushText( List<F2PreparedToken> result, StringBuilder plain) {
 
         if( plain.length() == 0 )
             return;
