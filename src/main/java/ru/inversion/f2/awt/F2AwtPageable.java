@@ -9,8 +9,8 @@ import java.awt.print.Printable;
 public final class F2AwtPageable implements Pageable {
 
     private final F2StyledDocument document;
-    private final PageFormat pageFormat;
-    private final Printable printable;
+    private final PageFormat       pageFormat;
+    private final Printable        printable;
 
     public F2AwtPageable(
             F2StyledDocument document,
@@ -23,7 +23,7 @@ public final class F2AwtPageable implements Pageable {
             throw new IllegalArgumentException("pageFormat is null");
 
         this.document   = document;
-        this.pageFormat = pageFormat;
+        this.pageFormat = (PageFormat) pageFormat.clone();
         this.printable  = new F2AwtDocumentPrintable(document);
     }
 
@@ -35,7 +35,7 @@ public final class F2AwtPageable implements Pageable {
     @Override
     public PageFormat getPageFormat(int pageIndex) {
         checkPageIndex(pageIndex);
-        return pageFormat;
+        return (PageFormat) pageFormat.clone();
     }
 
     @Override
@@ -45,7 +45,7 @@ public final class F2AwtPageable implements Pageable {
     }
 
     private void checkPageIndex(int pageIndex) {
-        if (pageIndex < 0 || pageIndex >= document.pageCount())
+        if( pageIndex < 0 || pageIndex >= document.pageCount() )
             throw new IndexOutOfBoundsException("pageIndex=" + pageIndex);
     }
 }

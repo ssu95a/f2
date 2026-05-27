@@ -1,6 +1,7 @@
 package ru.inversion.f2.awt;
 
 import ru.inversion.f2.prepared.F2StyledPage;
+import ru.inversion.utils.Checks;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -15,6 +16,9 @@ public final class F2AwtPreviewRenderer {
         F2AwtPageRenderConfig config
     )
     {
+        Checks.Require.object(page, "page");
+        Checks.Require.object(config, "config");
+
         final BufferedImage image = new BufferedImage( config.imageWidthPx(), config.imageHeightPx(), BufferedImage.TYPE_INT_ARGB );
 
         Graphics2D g = image.createGraphics();
