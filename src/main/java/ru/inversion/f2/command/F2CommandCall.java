@@ -18,20 +18,21 @@ import java.util.Locale;
 public final class F2CommandCall {
 
     private final String name;
-    private final List<String> args;
     private final String raw;
 
+    private final List<String> args;
+
     /** */
-    public F2CommandCall(String name, List<String> args, String raw)
+    public F2CommandCall( String name, List<String> args, String raw )
     {
         Checks.Require.text( name,"name" );
 
         this.name = normalizeName(name);
 
-        if (args == null)
+        if( args == null )
             this.args = Collections.emptyList();
         else
-            this.args = Collections.unmodifiableList(new ArrayList<String>(args));
+            this.args = Collections.unmodifiableList(new ArrayList<>(args));
 
         this.raw = raw;
     }

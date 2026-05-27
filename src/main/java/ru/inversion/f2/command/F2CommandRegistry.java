@@ -46,7 +46,8 @@ public final class F2CommandRegistry {
 
             F2CommandDef def = new F2CommandDef( name, null, properties, styleProgram);
 
-            result.put(name, def);        }
+            result.put(name, def);
+        }
 
         return new F2CommandRegistry(result);
     }

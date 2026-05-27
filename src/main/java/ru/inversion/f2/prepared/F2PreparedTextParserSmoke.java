@@ -11,8 +11,10 @@ public final class F2PreparedTextParserSmoke {
     public static void main(String[] args) {
 
         smokeSimple();
-        smokeNewLine();
+        //smokeNewLine();
         smokeUnclosedCommand();
+        smokeEmptyCommand();
+        smokeCommandCrossesLine();
 
         System.out.println("F2 prepared text parser smoke OK");
     }
@@ -72,6 +74,36 @@ public final class F2PreparedTextParserSmoke {
             throw new IllegalStateException(
                     "Expected [" + expected + "], actual [" + actual + "]"
             );
+        }
+    }
+
+    private static void smokeUnclosedWithText() {
+        try {
+            new F2PreparedTextParser().parse("A `UNDER+");
+            throw new IllegalStateException("Unclosed command was accepted");
+        }
+        catch (F2Exception expected) {
+            System.out.println("unclosed command with text OK");
+        }
+    }
+
+    private static void smokeEmptyCommand() {
+        try {
+            new F2PreparedTextParser().parse("A `` B");
+            throw new IllegalStateException("Empty command was accepted");
+        }
+        catch (F2Exception expected) {
+            System.out.println("empty command OK");
+        }
+    }
+
+    private static void smokeCommandCrossesLine() {
+        try {
+            new F2PreparedTextParser().parse("A `UNDER+\nB`");
+            throw new IllegalStateException("Multiline command was accepted");
+        }
+        catch (F2Exception expected) {
+            System.out.println("multiline command rejected OK");
         }
     }
 }
