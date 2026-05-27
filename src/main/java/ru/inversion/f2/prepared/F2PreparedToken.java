@@ -1,6 +1,7 @@
 package ru.inversion.f2.prepared;
 
 import ru.inversion.f2.command.F2CommandCall;
+import ru.inversion.utils.Checks;
 import ru.inversion.utils.S;
 
 public final class F2PreparedToken {
@@ -24,25 +25,6 @@ public final class F2PreparedToken {
         this.commandCall = commandCall;
     }
 
-    /** */
-    public static F2PreparedToken text( String value )
-    {
-        return new F2PreparedToken( Type.TEXT, value == null ? S.EMPTY_STRING : value, null );
-    }
-
-    /** */
-    public static F2PreparedToken command(F2CommandCall call) {
-        if (call == null)
-            throw new IllegalArgumentException("call is null");
-
-        return new F2PreparedToken(Type.COMMAND, null, call);
-    }
-
-    /** */
-    public static F2PreparedToken newLine() {
-        return NEW_LINE;
-    }
-
     public Type type() {
         return type;
     }
@@ -57,10 +39,23 @@ public final class F2PreparedToken {
 
     @Override
     public String toString() {
-        return "F2PreparedToken{"
-                + "type=" + type
-                + ", text='" + text + '\''
-                + ", commandCall=" + commandCall
-                + '}';
+        return "F2PreparedToken{" + "type=" + type + ", text='" + text + '\'' + ", commandCall=" + commandCall + '}';
     }
+
+    /** */
+    public static F2PreparedToken text( String value )
+    {
+        return new F2PreparedToken( Type.TEXT, value == null ? S.EMPTY_STRING : value, null );
+    }
+
+    /** */
+    public static F2PreparedToken command(F2CommandCall call) {
+        return new F2PreparedToken( Type.COMMAND, null, Checks.Require.object(call,"call") );
+    }
+
+    /** */
+    public static F2PreparedToken newLine() {
+        return NEW_LINE;
+    }
+
 }

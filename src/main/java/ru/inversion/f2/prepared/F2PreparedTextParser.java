@@ -1,69 +1,49 @@
 package ru.inversion.f2.prepared;
 
+import ru.inversion.f2.error.F2Errors;
 import ru.inversion.f2.command.F2CommandCall;
 import ru.inversion.f2.command.F2CommandCallParser;
-import ru.inversion.f2.error.F2Errors;
+import ru.inversion.utils.ReaderScanner;
 import ru.inversion.utils.S;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public final class F2PreparedTextParser {
 
-    /** */
     public List<F2PreparedToken> parse( String text )
     {
-        List<F2PreparedToken> result = new ArrayList<>();
+        final List<F2PreparedToken> result = new ArrayList<>();
+
+        final StringBuilder plain = new StringBuilder();
 
         if( S.isNullOrEmpty(text) )
             return result;
 
-        final StringBuilder plain = new StringBuilder();
+        final Iterator<ReaderScanner.IContext> iter = ReaderScanner.newIterable(text).iterator();
 
-        for( int i = 0; i < text.length(); i++ )
+        while( iter.hasNext() )
         {
-            char ch = text.charAt(i);
+            ReaderScanner.IContext ctx = iter.next();
 
-            if( ch == '`' )
-            {
-                flushText( result, plain );
-
-                int end = text.indexOf('`', i + 1);
-
-                if( end < 0 )
-                    throw F2Errors.of( F2Errors.ErrorCode.COMMAND_CALL_INVALID).param("reason", "Unclosed command quote").param( "pos", i ).param("text", text);
-
-                String commandText = text.substring(i, end + 1);
-                F2CommandCall call = F2CommandCallParser.parse(commandText);
-
-                result.add(F2PreparedToken.command(call));
-
-                i = end;
-
-                continue;
-            }
+            char ch = ctx.current();
 
             if( ch == '\n' )
             {
-                flushText(result, plain);
+                flushText ( result, plain );
                 result.add( F2PreparedToken.newLine() );
+
                 continue;
             }
 
-            if (ch == '\r') {
-                /*
-                 * CRLF: съедаем CR, NEW_LINE создаём на LF.
-                 * CR-only тоже считаем NEW_LINE.
-                 */
+            if( ch == '`' )
+            {
                 flushText(result, plain);
 
-                if (i + 1 < text.length() && text.charAt(i + 1) == '\n') {
-                    result.add(F2PreparedToken.newLine());
-                    i++;
-                }
-                else {
-                    result.add(F2PreparedToken.newLine());
-                }
+                F2CommandCall call = readCommandCall(iter, text, ctx);
+
+                result.add( F2PreparedToken.command(call) );
 
                 continue;
             }
@@ -76,13 +56,74 @@ public final class F2PreparedTextParser {
         return result;
     }
 
-    private static void flushText( List<F2PreparedToken> result, StringBuilder plain) {
+    private F2CommandCall readCommandCall(
+            Iterator<ReaderScanner.IContext> iter,
+            String sourceText,
+            ReaderScanner.IContext startCtx
+    )
+    {
+        final int startLine = startCtx.lineNum();
+        final int startSymb = startCtx.symbNum();
 
+        final StringBuilder sb = new StringBuilder();
+
+        boolean closed = false;
+
+        while( iter.hasNext() )
+        {
+            ReaderScanner.IContext ctx = iter.next();
+
+            char ch = ctx.current();
+
+            if (ch == '`') {
+                closed = true;
+                break;
+            }
+
+            /*
+             * Команда через физический перевод строки выглядит подозрительно.
+             * Лучше падать сразу, чем потом получить "команду" из половины файла.
+             */
+            if( ch == '\n' )
+            {
+                throw F2Errors.of(F2Errors.ErrorCode.COMMAND_CALL_INVALID)
+                        .param("reason", "Command quote crosses line break")
+                        .param("line", startLine )
+                        .param("symb", startSymb )
+                        .param("text", sourceText);
+            }
+
+            sb.append(ch);
+        }
+
+        if (!closed)
+        {
+            throw F2Errors.of(F2Errors.ErrorCode.COMMAND_CALL_INVALID)
+                    .param("reason", "Unclosed command quote")
+                    .param("line", startLine)
+                    .param("symb", startSymb)
+                    .param("text", sourceText);
+        }
+
+        if( sb.length() == 0 )
+        {
+            throw F2Errors.of(F2Errors.ErrorCode.COMMAND_CALL_INVALID)
+                    .param("reason", "Empty command")
+                    .param("line", startLine)
+                    .param("symb", startSymb)
+                    .param("text", sourceText);
+        }
+
+        return F2CommandCallParser.parse(sb.toString());
+    }
+
+    /** */
+    private void flushText( List<F2PreparedToken> result, StringBuilder plain )
+    {
         if( plain.length() == 0 )
             return;
 
         result.add( F2PreparedToken.text(plain.toString()) );
-
         plain.setLength(0);
     }
 }
