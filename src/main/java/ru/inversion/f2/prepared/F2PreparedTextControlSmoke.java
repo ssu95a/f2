@@ -17,7 +17,7 @@ public final class F2PreparedTextControlSmoke {
 
     public static void main(String[] args) {
 
-        F2CommandRegistry registry = F2CommandRegistry.from(createModel());
+        F2CommandRegistry registry = F2CommandRegistry.make(createModel());
 
         smokePageEnd(registry);
         smokeDirectPageEnd(registry);
@@ -98,7 +98,7 @@ public final class F2PreparedTextControlSmoke {
                 Boolean.valueOf(
                         doc.pages().get(0)
                                 .lines().get(0)
-                                .runs().get(0)
+                                .chunks().get(0)
                                 .style()
                                 .underline()
                 )
@@ -109,7 +109,7 @@ public final class F2PreparedTextControlSmoke {
                 Boolean.valueOf(
                         doc.pages().get(1)
                                 .lines().get(0)
-                                .runs().get(0)
+                                .chunks().get(0)
                                 .style()
                                 .underline()
                 )

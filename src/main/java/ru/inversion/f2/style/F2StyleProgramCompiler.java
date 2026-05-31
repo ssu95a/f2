@@ -18,7 +18,6 @@ public final class F2StyleProgramCompiler {
     /** */
     public F2StyleProgram compile( F2CommandDef def )
     {
-
         Checks.Require.object(def,"def");
 
         List<F2StyleOp> ops = new ArrayList<>();
@@ -37,14 +36,14 @@ public final class F2StyleProgramCompiler {
     }
 
     /** */
-    private F2StyleOp compileProperty(F2CommandDef def, F2CommandPropertyValue pv) {
+    private F2StyleOp compileProperty( F2CommandDef def, F2CommandPropertyValue pv) {
 
         if( pv == null )
             return null;
 
         F2CommandProperty property = pv.property();
 
-        if (property == null) {
+        if( property == null ) {
             log.warn( "Unknown F2 command property: command={}, rawName={}, rawValue={}", def.name(), pv.rawName(), pv.rawValue() );
             return null;
         }
@@ -57,7 +56,7 @@ public final class F2StyleProgramCompiler {
             case ITALIC:
                 return F2SetItalic.of(pv.valueAs(Boolean.class, Boolean.FALSE));
             case FONT_NAME:
-                return new F2SetFontName(pv.valueAs(String.class, null));
+                return new F2SetFontName( pv.valueAs(String.class, null));
             case FONT_SIZE:
                 return new F2SetFontSize  ( pv.valueAs(Integer.class, 10));
             case LEFT:

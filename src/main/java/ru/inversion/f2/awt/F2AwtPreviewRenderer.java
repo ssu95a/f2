@@ -29,7 +29,7 @@ public final class F2AwtPreviewRenderer {
 
             g.scale( config.scale(), config.scale() );
 
-            painter.paint(g, page, config);
+            painter.paint( g, page, config) ;
         }
         finally {
             g.dispose();

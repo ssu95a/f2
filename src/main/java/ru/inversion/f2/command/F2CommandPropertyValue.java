@@ -6,11 +6,10 @@ import ru.inversion.utils.converter.TypeConverter;
 public final class F2CommandPropertyValue {
 
     private final F2CommandProperty property;
+    private final Object value;
 
     private final String rawName;
     private final String rawValue;
-
-    private final Object value;
 
     /** */
     public F2CommandPropertyValue (
@@ -41,14 +40,17 @@ public final class F2CommandPropertyValue {
         return rawValue;
     }
 
+    /** */
     public Object value() {
         return value;
     }
+
     /** */
     public boolean known() {
         return property != null;
     }
 
+    /** */
     public <T> T valueAs( Class<T> clazz, T defValue )
     {
         return value instanceof F2CommandCall

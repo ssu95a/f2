@@ -8,15 +8,12 @@ public final class F2StyledDocument {
 
     private final List<F2StyledPage> pages;
 
-    public F2StyledDocument(List<F2StyledPage> pages) {
-        if (pages == null || pages.isEmpty()) {
+    public F2StyledDocument(List<F2StyledPage> pages)
+    {
+        if( pages == null || pages.isEmpty() )
             this.pages = Collections.emptyList();
-        }
-        else {
-            this.pages = Collections.unmodifiableList(
-                    new ArrayList<F2StyledPage>(pages)
-            );
-        }
+        else
+            this.pages = Collections.unmodifiableList( new ArrayList<>(pages) );
     }
 
     public List<F2StyledPage> pages() {
@@ -35,7 +32,8 @@ public final class F2StyledDocument {
      * Временный convenience для старых smoke-тестов.
      */
     public List<F2StyledLine> lines() {
-        if (pages.isEmpty())
+
+        if( pages.isEmpty() )
             return Collections.emptyList();
 
         return pages.get(0).lines();

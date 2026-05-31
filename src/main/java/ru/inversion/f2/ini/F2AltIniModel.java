@@ -10,6 +10,13 @@ import java.util.Map;
 */
 public interface F2AltIniModel {
 
+    String DRIVER_REF_CODE_TEXT =
+            "CodeText";
+
+    String DRIVER_REF_CODE_GRAPHICS =
+            "CodeGraphics";
+
+
     Map<String, String> commands();
 
     Map<String, String> codeText();
@@ -28,4 +35,9 @@ public interface F2AltIniModel {
 
     String driverRef(String name);
 
+    /** */
+    boolean isMatrixPrinter( String printerName );
+
+    /** */
+    boolean isGraphicsPrinter(String printerName);
 }

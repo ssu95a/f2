@@ -34,7 +34,7 @@ public final class F2CommandSmoke {
                 Collections.<String, String>emptyMap()
         );
 
-        F2CommandRegistry registry = F2CommandRegistry.from(model);
+        F2CommandRegistry registry = F2CommandRegistry.make(model);
 
         smokeUnderPlus(registry);
         smokeNormal(registry);
@@ -46,7 +46,7 @@ public final class F2CommandSmoke {
 
     private static void smokeUnderPlus(F2CommandRegistry registry) {
 
-        F2CommandCall call = F2CommandCallParser.parse("`UNDER+`");
+        F2CommandCall call = F2CommandCall.parse("`UNDER+`");
         F2CommandRef ref = registry.resolve(call);
 
         assertEquals("UNDER+", ref.name());
@@ -132,7 +132,7 @@ public final class F2CommandSmoke {
     private static void smokeUnknownCommand(F2CommandRegistry registry) {
 
         try {
-            registry.resolve(F2CommandCallParser.parse("`NO_SUCH_COMMAND`"));
+            registry.resolve(F2CommandCall.parse("`NO_SUCH_COMMAND`"));
             throw new IllegalStateException("Unknown command was resolved unexpectedly");
         }
         catch (IllegalStateException expected) {

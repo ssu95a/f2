@@ -20,7 +20,7 @@ public final class F2CommandDef {
     /** */
     public F2CommandDef( String name, String description, List<F2CommandPropertyValue> properties, F2StyleProgram styleProgram )
     {
-        Checks.Require.text(name,"name");
+        Checks.Require.text( name,"name" );
 
         this.description  = description;
         this.name         = name.trim();

@@ -16,7 +16,7 @@ public final class F2AltIniModelLoader {
 
     private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-    public F2AltIniModel load(Path iniFile, Charset charset) throws Exception {
+    public F2AltIniModel load( Path iniFile, Charset charset ) throws Exception {
 
         log.info("Loading F2 ALT INI: file={}, charset={}", iniFile, charset);
 
@@ -27,38 +27,35 @@ public final class F2AltIniModelLoader {
 
         String section = IniFileEvent.DEFAULT_SECTION;
 
-        try (IniFileEventReader reader
-                     = IniFileEventReader
-                .newBuilder()
-                .iniFile(iniFile)
-                .charset(charset)
-                .semicolonPartOfValue(true)
-                .hashPartOfValue(false)
-                .build()
-        ) {
-            while (reader.hasNext()) {
+        try (IniFileEventReader reader = IniFileEventReader.newBuilder().iniFile(iniFile).charset(charset).semicolonPartOfValue(true).hashPartOfValue(false).build() )
+        {
+            while( reader.hasNext() )
+            {
                 IniFileEvent e = reader.next();
 
-                if (e.type() == IniFileEvent.Type.Section) {
+                if( e.type() == IniFileEvent.Type.Section ) {
                     section = normalizeSectionName(e.value());
                     continue;
                 }
 
-                if (e.type() != IniFileEvent.Type.Parameter)
+                if( e.type() != IniFileEvent.Type.Parameter)
                     continue;
 
-                Map<String, String> target = targetMap(
-                        section, commands, codeText, codeGraphics, driverRef
+                Map<String, String> target = targetMap (
+                    section, commands, codeText, codeGraphics, driverRef
                 );
 
-                if (target == null)
+                if( target == null )
                     continue;
 
-                target.put(S.nz(e.key()), e.value());
+                if( e.key() == null || e.key().trim().isEmpty() )
+                    continue;
+
+                target.put( e.key().trim(), e.value() );
             }
         }
 
-        return new F2MapAltIniModel(commands, codeText, codeGraphics, driverRef);
+        return new F2MapAltIniModel( commands, codeText, codeGraphics, driverRef );
     }
 
     /**

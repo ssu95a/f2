@@ -107,10 +107,10 @@ public final class F2AltIniModelLoaderSmoke {
 
     private static void smokeRegistryFromLoadedModel(F2AltIniModel model) {
 
-        F2CommandRegistry registry = F2CommandRegistry.from(model);
+        F2CommandRegistry registry = F2CommandRegistry.make(model);
 
         F2CommandRef under = registry.resolve(
-                F2CommandCallParser.parse("`UNDER+`")
+                F2CommandCall.parse("`UNDER+`")
         );
 
         assertEquals("UNDER+", under.def().name());
@@ -118,7 +118,7 @@ public final class F2AltIniModelLoaderSmoke {
         assertEquals(Boolean.TRUE, under.def().properties().get(0).value());
 
         F2CommandRef ff = registry.resolve(
-                F2CommandCallParser.parse("`FF`")
+                F2CommandCall.parse("`FF`")
         );
 
         F2CommandPropertyValue pv = ff.def().properties().get(0);

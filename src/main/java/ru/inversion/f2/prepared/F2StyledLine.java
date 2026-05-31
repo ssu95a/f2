@@ -11,49 +11,52 @@ import java.util.List;
 */
 public final class F2StyledLine {
 
-    private final List<F2StyledTextRun> runs;
+    private final List<F2StyledTextChunk> chunks;
     private final double lineStepPt;
     private final double leftIndentPt;
 
-    public F2StyledLine(
-            List<F2StyledTextRun> runs,
+    public F2StyledLine (
+            List<F2StyledTextChunk> chunks,
             double lineStepPt,
             double leftIndentPt
-    ) {
-        if (runs == null || runs.isEmpty()) {
-            this.runs = Collections.emptyList();
-        }
-        else {
-            this.runs = Collections.unmodifiableList(
-                    new ArrayList<F2StyledTextRun>(runs)
-            );
-        }
+    )
+    {
+        if( chunks == null || chunks.isEmpty() )
+            this.chunks = Collections.emptyList();
+        else
+            this.chunks = Collections.unmodifiableList( new ArrayList<>(chunks) );
 
-        this.lineStepPt = lineStepPt;
+        this.lineStepPt   = lineStepPt;
         this.leftIndentPt = leftIndentPt;
     }
 
-    public List<F2StyledTextRun> runs() {
-        return runs;
+    /** */
+    public List<F2StyledTextChunk> chunks() {
+        return chunks;
     }
 
+    /** */
     public double lineStepPt() {
         return lineStepPt;
     }
 
+    /** */
     public double leftIndentPt() {
         return leftIndentPt;
     }
 
+    /** */
     public boolean isEmpty() {
-        return runs.isEmpty();
+        return chunks.isEmpty();
     }
 
-    public String plainText() {
+    /** */
+    public String plainText()
+    {
         StringBuilder sb = new StringBuilder();
 
-        for (F2StyledTextRun run : runs)
-            sb.append(run.text());
+        for( F2StyledTextChunk run : chunks )
+             sb.append( run.text() );
 
         return sb.toString();
     }
@@ -61,7 +64,7 @@ public final class F2StyledLine {
     @Override
     public String toString() {
         return "F2StyledLine{"
-                + "runs=" + runs
+                + "chunks=" + chunks
                 + ", lineStepPt=" + lineStepPt
                 + ", leftIndentPt=" + leftIndentPt
                 + '}';

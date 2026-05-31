@@ -61,8 +61,8 @@ public final class F2CommandPropertyValueParser {
 
         Class<?> type = property.valueType();
 
-        if (type == F2CommandCall.class)
-            return F2CommandCallParser.parse(rawValue);
+        if( type == F2CommandCall.class )
+            return F2CommandCall.parse(rawValue);
 
         if( type == OrientationRequested.class )
             return parseOrientation(rawValue);
@@ -70,7 +70,7 @@ public final class F2CommandPropertyValueParser {
         if( type == Double.class )
             return Double.valueOf(rawValue);
 
-        return TypeConverter.convert(rawValue, type);
+        return TypeConverter.convert( rawValue, type );
     }
 
 

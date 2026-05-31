@@ -35,7 +35,7 @@ public final class F2AwtDocumentPrintable implements Printable {
         if( !(graphics instanceof Graphics2D) )
             throw new IllegalArgumentException("graphics is not Graphics2D");
 
-        F2AwtPageRenderConfig config = F2AwtPageRenderConfig.fromPageFormat( pageFormat, 72.0d, false );
+        F2AwtPageRenderConfig config = F2AwtPageRenderConfig.fromPageFormat( pageFormat, 72.0d, false ).withShrinkToFit(true);
 
         painter.paint( (Graphics2D) graphics, document.pages().get(pageIndex), config );
 

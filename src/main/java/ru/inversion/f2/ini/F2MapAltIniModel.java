@@ -4,6 +4,7 @@ import ru.inversion.utils.S;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public final class F2MapAltIniModel implements F2AltIniModel {
@@ -70,15 +71,45 @@ public final class F2MapAltIniModel implements F2AltIniModel {
         return driverRef.get(cleanCommandName(name));
     }
 
+    @Override
+    public boolean isMatrixPrinter(String printerName) {
+        return isDriverRefMode( printerName, DRIVER_REF_CODE_TEXT );
+    }
+
+    @Override
+    public boolean isGraphicsPrinter(String printerName) {
+        return isDriverRefMode( printerName, DRIVER_REF_CODE_GRAPHICS );
+    }
+
+    private boolean isDriverRefMode(
+            String printerName,
+            String expectedMode
+    ) {
+        String value = driverRef(printerName);
+        if (S.isNullOrEmpty(value))
+            return false;
+        return normalizeDriverRef(value).equals(normalizeDriverRef(expectedMode));
+    }
+
+    /** */
+    private static String normalizeDriverRef(String value) {
+        return value == null
+                ? S.EMPTY_STRING
+                : value.trim()
+                .replace('_', ' ')
+                .replace('-', ' ')
+                .replaceAll("\\s+", " ")
+                .toUpperCase(Locale.ENGLISH);
+    }
     /** */
     private static Map<String, String> cleanCommandMap( Map<String, String> source )
     {
-        if (source == null || source.isEmpty())
+        if( source == null || source.isEmpty() )
             return Collections.emptyMap();
 
         Map<String, String> result = new LinkedHashMap<String, String>();
 
-        for (Map.Entry<String, String> e : source.entrySet()) {
+        for( Map.Entry<String, String> e : source.entrySet() ) {
             result.put(cleanName(e.getKey()), e.getValue());
         }
 

@@ -16,17 +16,54 @@ import java.util.*;
 */
 public final class F2CommandRegistry {
 
+    /** */
     private final Map<String, F2CommandDef> commands;
 
-    private F2CommandRegistry(Map<String, F2CommandDef> commands) {
-        this.commands = Collections.unmodifiableMap(
-                new LinkedHashMap<String, F2CommandDef>(commands)
-        );
+    /** */
+
+    /** */
+    private F2CommandRegistry( Map<String, F2CommandDef> commands) {
+        this.commands = Collections.unmodifiableMap( new LinkedHashMap<>(commands) );
     }
 
-    public static F2CommandRegistry from(F2AltIniModel model) {
+    /** */
+    public F2CommandRef initCommand( )
+    {
+        throw new UnsupportedOperationException( "initCommand" );
+    }
 
-        Checks.Require.object(model,"model");
+    /** */
+    public F2CommandDef find( String name ) {
+        return name == null ?  null : commands.get( name.trim() );
+    }
+
+    /** */
+    public F2CommandRef resolve( F2CommandCall call ) {
+
+        if( call == null )
+            throw F2Errors.of( F2Errors.ErrorCode.COMMAND_CALL_INVALID ).param("call", null);
+
+        F2CommandDef def = find( call.name() );
+
+        if( def == null )
+            throw F2Errors.commandNotFound( call.name(), call.raw() );
+
+        return new F2CommandRef( call, def );
+    }
+
+    /** */
+    public Collection<F2CommandDef> definitions() {
+        return commands.values();
+    }
+
+    public int size() {
+        return commands.size();
+    }
+
+    /** */
+    public static F2CommandRegistry make( F2AltIniModel model )
+    {
+        Checks.Require.object( model,"model" );
 
         F2CommandPropertyValueParser propertyParser = new F2CommandPropertyValueParser();
 
@@ -44,7 +81,7 @@ public final class F2CommandRegistry {
 
             F2StyleProgram styleProgram = styleCompiler.compile(def0);
 
-            F2CommandDef def = new F2CommandDef( name, null, properties, styleProgram);
+            F2CommandDef def = new F2CommandDef( name, null, properties, styleProgram );
 
             result.put(name, def);
         }
@@ -52,32 +89,4 @@ public final class F2CommandRegistry {
         return new F2CommandRegistry(result);
     }
 
-    public F2CommandDef find(String name) {
-        if (name == null)
-            return null;
-
-        return commands.get(name.trim());
-    }
-
-    /** */
-    public F2CommandRef resolve(F2CommandCall call) {
-
-        if( call == null )
-            throw F2Errors.of( F2Errors.ErrorCode.COMMAND_CALL_INVALID ).param("call", null);
-
-        F2CommandDef def = find( call.name() );
-
-        if( def == null )
-            throw F2Errors.commandNotFound(call.name(), call.raw());
-
-        return new F2CommandRef(call, def);
-    }
-
-    public Collection<F2CommandDef> definitions() {
-        return commands.values();
-    }
-
-    public int size() {
-        return commands.size();
-    }
 }

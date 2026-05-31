@@ -3,7 +3,7 @@ package ru.inversion.f2.diagnostic;
 import ru.inversion.f2.prepared.F2StyledDocument;
 import ru.inversion.f2.prepared.F2StyledLine;
 import ru.inversion.f2.prepared.F2StyledPage;
-import ru.inversion.f2.prepared.F2StyledTextRun;
+import ru.inversion.f2.prepared.F2StyledTextChunk;
 import ru.inversion.f2.style.F2Style;
 
 public final class F2StyledDocumentDumper {
@@ -51,8 +51,8 @@ public final class F2StyledDocumentDumper {
     }
 
     private static void dumpLineRuns(StringBuilder sb, F2StyledLine line) {
-        for (int r = 0; r < line.runs().size(); r++) {
-            F2StyledTextRun run = line.runs().get(r);
+        for (int r = 0; r < line.chunks().size(); r++) {
+            F2StyledTextChunk run = line.chunks().get(r);
             F2Style style = run.style();
 
             sb.append("    RUN ").append(r + 1)

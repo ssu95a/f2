@@ -19,6 +19,52 @@ public final class F2AwtPageRenderConfig {
 
     private final boolean debugOverlay;
 
+    private final double contentScale;
+    private final boolean shrinkToFit;
+
+    private F2AwtPageRenderConfig(
+            double paperWidthPt,
+            double paperHeightPt,
+            double imageableXPt,
+            double imageableYPt,
+            double imageableWidthPt,
+            double imageableHeightPt,
+            double dpi,
+            boolean debugOverlay,
+            double contentScale,
+            boolean shrinkToFit
+    ) {
+
+        if( paperWidthPt <= 0.0d )
+            throw new IllegalArgumentException("paperWidthPt <= 0");
+
+        if( paperHeightPt <= 0.0d )
+            throw new IllegalArgumentException("paperHeightPt <= 0");
+
+        if( imageableWidthPt <= 0.0d )
+            throw new IllegalArgumentException("imageableWidthPt <= 0");
+
+        if( imageableHeightPt <= 0.0d )
+            throw new IllegalArgumentException("imageableHeightPt <= 0");
+
+        if( dpi <= 0.0d )
+            throw new IllegalArgumentException("dpi <= 0");
+
+        if( contentScale <= 0.0d )
+            throw new IllegalArgumentException("contentScale <= 0");
+
+        this.paperWidthPt = paperWidthPt;
+        this.paperHeightPt = paperHeightPt;
+        this.imageableXPt = imageableXPt;
+        this.imageableYPt = imageableYPt;
+        this.imageableWidthPt = imageableWidthPt;
+        this.imageableHeightPt = imageableHeightPt;
+        this.dpi = dpi;
+        this.debugOverlay = debugOverlay;
+        this.contentScale = contentScale;
+        this.shrinkToFit = shrinkToFit;
+    }
+
     public F2AwtPageRenderConfig(
             double paperWidthPt,
             double paperHeightPt,
@@ -28,32 +74,59 @@ public final class F2AwtPageRenderConfig {
             double imageableHeightPt,
             double dpi,
             boolean debugOverlay
-    ) {
-        if (paperWidthPt <= 0.0d)
-            throw new IllegalArgumentException("paperWidthPt <= 0");
-
-        if (paperHeightPt <= 0.0d)
-            throw new IllegalArgumentException("paperHeightPt <= 0");
-
-        if (imageableWidthPt <= 0.0d)
-            throw new IllegalArgumentException("imageableWidthPt <= 0");
-
-        if (imageableHeightPt <= 0.0d)
-            throw new IllegalArgumentException("imageableHeightPt <= 0");
-
-        if (dpi <= 0.0d)
-            throw new IllegalArgumentException("dpi <= 0");
-
-        this.paperWidthPt = paperWidthPt;
-        this.paperHeightPt = paperHeightPt;
-        this.imageableXPt = imageableXPt;
-        this.imageableYPt = imageableYPt;
-        this.imageableWidthPt = imageableWidthPt;
-        this.imageableHeightPt = imageableHeightPt;
-        this.dpi          = dpi;
-        this.debugOverlay = debugOverlay;
+    )
+    {
+        this(
+                paperWidthPt,
+                paperHeightPt,
+                imageableXPt,
+                imageableYPt,
+                imageableWidthPt,
+                imageableHeightPt,
+                dpi,
+                debugOverlay,
+                1.0d,
+                false
+        );
     }
 
+    public double contentScale() {
+        return contentScale;
+    }
+
+    public boolean shrinkToFit() {
+        return shrinkToFit;
+    }
+
+    public F2AwtPageRenderConfig withContentScale(double value) {
+        return new F2AwtPageRenderConfig(
+                paperWidthPt,
+                paperHeightPt,
+                imageableXPt,
+                imageableYPt,
+                imageableWidthPt,
+                imageableHeightPt,
+                dpi,
+                debugOverlay,
+                value,
+                shrinkToFit
+        );
+    }
+
+    public F2AwtPageRenderConfig withShrinkToFit(boolean value) {
+        return new F2AwtPageRenderConfig(
+                paperWidthPt,
+                paperHeightPt,
+                imageableXPt,
+                imageableYPt,
+                imageableWidthPt,
+                imageableHeightPt,
+                dpi,
+                debugOverlay,
+                contentScale,
+                value
+        );
+    }
     public static F2AwtPageRenderConfig a4Portrait() {
         /*
          * A4: 210 x 297 mm.
@@ -126,7 +199,9 @@ public final class F2AwtPageRenderConfig {
                 imageableWidthPt,
                 imageableHeightPt,
                 value,
-                debugOverlay
+                debugOverlay,
+                contentScale,
+                shrinkToFit
         );
     }
 
@@ -139,7 +214,9 @@ public final class F2AwtPageRenderConfig {
                 imageableWidthPt,
                 imageableHeightPt,
                 dpi,
-                value
+                value,
+                contentScale,
+                shrinkToFit
         );
     }
 

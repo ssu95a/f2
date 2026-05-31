@@ -14,8 +14,7 @@ public final class F2CommandRef {
     /** */
     public F2CommandRef(F2CommandCall call, F2CommandDef def) {
 
-        Checks.Require.object( call, "call");
-        Checks.Require.object( def , "def" );
+        Checks.Require.objects( call, "call", def , "def" );
 
         this.call = call;
         this.def  = def;

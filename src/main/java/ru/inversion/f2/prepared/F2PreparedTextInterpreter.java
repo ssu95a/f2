@@ -4,40 +4,45 @@ import ru.inversion.f2.command.F2CommandRef;
 import ru.inversion.f2.command.F2CommandRegistry;
 import ru.inversion.f2.control.F2ControlState;
 import ru.inversion.f2.style.F2RenderState;
+import ru.inversion.utils.Checks;
+import ru.inversion.utils.S;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public final class F2PreparedTextInterpreter {
 
-    public F2StyledDocument interpret(
+    public F2StyledDocument interpret (
             List<F2PreparedToken> tokens,
             F2CommandRegistry registry
-    ) {
-        if (registry == null)
-            throw new IllegalArgumentException("registry is null");
+    )
+    {
+        Checks.Require.object( registry, "registry" );
 
-        Context ctx = new Context();
+        final Context ctx = new Context();
 
-        if (tokens != null) {
-            for (F2PreparedToken token : tokens) {
+        if( tokens != null )
+        {
+            for( F2PreparedToken token : tokens ) {
+
                 if (token == null)
                     continue;
 
-                processToken(token, registry, ctx);
+                processToken( token, registry, ctx );
             }
         }
 
         ctx.finishDocument();
 
-        return new F2StyledDocument(ctx.pages);
+        return new F2StyledDocument( ctx.pages );
     }
 
     private void processToken(
             F2PreparedToken token,
             F2CommandRegistry registry,
             Context ctx
-    ) {
+    )
+    {
         switch (token.type()) {
             case TEXT:
                 processText(token, ctx);
@@ -52,54 +57,42 @@ public final class F2PreparedTextInterpreter {
                 break;
 
             default:
-                throw new IllegalStateException(
-                        "Unsupported token type: " + token.type()
-                );
+                throw new IllegalStateException( "Unsupported token type: " + token.type() );
         }
     }
 
-    private void processText(
-            F2PreparedToken token,
-            Context ctx
-    ) {
-        String text = token.text();
+    /** */
+    private void processText( F2PreparedToken token, Context ctx )
+    {
+        final String text = token.text( );
 
-        if (text == null || text.length() == 0)
+        if(S.isNullOrEmpty(text))
             return;
 
-        ctx.currentRuns.add(new F2StyledTextRun(
-                text,
-                ctx.state.style()
-        ));
+        ctx.currentRuns.add( new F2StyledTextChunk( text, ctx.state.style() ));
     }
 
-    private void processCommand(
-            F2PreparedToken token,
-            F2CommandRegistry registry,
-            Context ctx
-    ) {
-        F2CommandRef ref = registry.resolve(token.commandCall());
+    /** */
+    private void processCommand( F2PreparedToken token, F2CommandRegistry registry, Context ctx )
+    {
+        F2CommandRef ref = registry.resolve( token.commandCall() );
 
         ctx.control.clear();
-
-        ctx.state = ref.def().styleProgram().apply(
-                ref.call(),
-                ctx.state,
-                registry,
-                ctx.control
-        );
+        ctx.state = ref.def().styleProgram().apply( ref.call(), ctx.state, registry, ctx.control );
 
         handleControl(ctx);
     }
 
     private void handleControl(Context ctx) {
-        if (!ctx.control.hasSignals())
+
+        if( !ctx.control.hasSignals() )
             return;
 
-        for (int i = 0; i < ctx.control.lineFeedCount(); i++)
-            ctx.finishCurrentLine();
+        for( int i = 0; i < ctx.control.lineFeedCount(); i++ )
+             ctx.finishCurrentLine();
 
-        if (ctx.control.pageEndRequested()) {
+        if( ctx.control.pageEndRequested() )
+        {
             ctx.finishCurrentLine();
             ctx.finishCurrentPage();
         }
@@ -115,8 +108,8 @@ public final class F2PreparedTextInterpreter {
         private List<F2StyledLine> currentPageLines =
                 new ArrayList<F2StyledLine>();
 
-        private List<F2StyledTextRun> currentRuns =
-                new ArrayList<F2StyledTextRun>();
+        private List<F2StyledTextChunk> currentRuns =
+                new ArrayList<F2StyledTextChunk>();
 
         private F2RenderState state =
                 F2RenderState.initial();
@@ -131,7 +124,7 @@ public final class F2PreparedTextInterpreter {
                     state.leftIndentPt()
             ));
 
-            currentRuns = new ArrayList<F2StyledTextRun>();
+            currentRuns = new ArrayList<F2StyledTextChunk>();
         }
 
         private void finishCurrentPage() {

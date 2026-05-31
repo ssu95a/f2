@@ -1,7 +1,7 @@
 package ru.inversion.f2.awt;
 
 import ru.inversion.f2.prepared.F2StyledLine;
-import ru.inversion.f2.prepared.F2StyledTextRun;
+import ru.inversion.f2.prepared.F2StyledTextChunk;
 import ru.inversion.f2.style.F2Style;
 import ru.inversion.utils.Checks;
 
@@ -13,10 +13,7 @@ import java.util.List;
 public final class F2AwtLineRenderer {
 
     /** */
-    public F2AwtLineMetrics measure (
-        Graphics2D g,
-        F2StyledLine line
-    )
+    public F2AwtLineMetrics measure ( Graphics2D g, F2StyledLine line )
     {
         Checks.Require.object( g,"g");
 
@@ -28,9 +25,9 @@ public final class F2AwtLineRenderer {
         double maxDescent = 0.0d;
         double maxLeading = 0.0d;
 
-        final List<F2StyledTextRun> runs = line.runs();
+        final List<F2StyledTextChunk> runs = line.chunks();
 
-        for( F2StyledTextRun run : runs )
+        for( F2StyledTextChunk run : runs )
         {
             if( run == null || run.isEmpty() )
                 continue;
@@ -39,9 +36,9 @@ public final class F2AwtLineRenderer {
 
             width += layout.getAdvance();
 
-            maxAscent = Math.max(maxAscent, layout.getAscent());
-            maxDescent = Math.max(maxDescent, layout.getDescent());
-            maxLeading = Math.max(maxLeading, layout.getLeading());
+            maxAscent  = Math.max( maxAscent,  layout.getAscent()  );
+            maxDescent = Math.max( maxDescent, layout.getDescent());
+            maxLeading = Math.max( maxLeading, layout.getLeading());
         }
 
         return new F2AwtLineMetrics( width, maxAscent, maxDescent, maxLeading );
@@ -49,42 +46,30 @@ public final class F2AwtLineRenderer {
 
     /**
      * Рисует строку по заданному baseline.
-     *
      * Все runs строки рисуются на одной baselineY.
      */
-    public F2AwtLineMetrics paint(
-            Graphics2D g,
-            F2StyledLine line,
-            double xPt,
-            double baselineYPt
-    )
+    public F2AwtLineMetrics paint( Graphics2D g, F2StyledLine line, double xPt, double baselineYPt )
     {
         Checks.Require.object( g,"g");
 
-        final F2AwtLineMetrics metrics = measure( g, line);
+        final F2AwtLineMetrics metrics = measure( g, line );
 
         if( line == null || line.isEmpty() )
             return metrics;
 
         double x = xPt;
 
-        for (F2StyledTextRun run : line.runs()) {
-            if (isEmpty(run))
+        for( F2StyledTextChunk run : line.chunks() )
+        {
+            if( isEmpty(run) )
                 continue;
 
             TextLayout layout = createTextLayout(g, run);
 
-            layout.draw(g, (float) x, (float) baselineYPt);
+            layout.draw( g, (float) x, (float) baselineYPt );
 
-            if (run.style() != null && run.style().underline()) {
-                paintUnderline(
-                        g,
-                        x,
-                        baselineYPt,
-                        layout.getAdvance(),
-                        layout.getDescent()
-                );
-            }
+            if( run.style() != null && run.style().underline() )
+                paintUnderline( g, x, baselineYPt, layout.getAdvance(), layout.getDescent() );
 
             x += layout.getAdvance();
         }
@@ -94,7 +79,7 @@ public final class F2AwtLineRenderer {
 
     private TextLayout createTextLayout(
             Graphics2D g,
-            F2StyledTextRun run
+            F2StyledTextChunk run
     ) {
         Font font = toAwtFont(run.style());
 
@@ -110,24 +95,23 @@ public final class F2AwtLineRenderer {
     }
 
     /** */
-    private Font toAwtFont(F2Style style) {
+    private Font toAwtFont(F2Style style)
+    {
         String fontName = style == null || style.fontName() == null
                 ? "Courier New"
                 : style.fontName();
 
-        int fontSize = style == null
-                ? 10
-                : style.fontSize();
+        int fontSize = style == null ? 10 : style.fontSize();
 
-        if (fontSize <= 0)
+        if( fontSize <= 0 )
             fontSize = 10;
 
         int awtStyle = Font.PLAIN;
 
-        if (style != null && style.bold())
+        if( style != null && style.bold() )
             awtStyle |= Font.BOLD;
 
-        if (style != null && style.italic())
+        if( style != null && style.italic() )
             awtStyle |= Font.ITALIC;
 
         return new Font( fontName, awtStyle, fontSize );
@@ -147,13 +131,13 @@ public final class F2AwtLineRenderer {
          * underline вручную, чтобы не зависеть от AttributedString.
          * Позиция немного ниже baseline.
          */
-        double y = baselineY + Math.max(1.0d, descent * 0.35d);
+        double y = baselineY + Math.max( 1.0d, descent * 0.35d );
 
         g.draw( new java.awt.geom.Line2D.Double( x, y, x + width, y  ));
     }
 
     /** */
-    private static boolean isEmpty(F2StyledTextRun run) {
+    private static boolean isEmpty(F2StyledTextChunk run) {
         return run == null || run.isEmpty();
     }
 }

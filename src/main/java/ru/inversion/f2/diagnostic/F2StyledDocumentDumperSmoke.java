@@ -1,7 +1,6 @@
-package ru.inversion.f2;
+package ru.inversion.f2.diagnostic;
 
 import ru.inversion.f2.command.F2CommandRegistry;
-import ru.inversion.f2.diagnostic.F2StyledDocumentDumper;
 import ru.inversion.f2.ini.F2AltIniModel;
 import ru.inversion.f2.ini.F2MapAltIniModel;
 import ru.inversion.f2.prepared.F2PreparedTextInterpreter;
@@ -18,7 +17,7 @@ public final class F2StyledDocumentDumperSmoke {
 
     public static void main(String[] args) {
 
-        F2CommandRegistry registry = F2CommandRegistry.from(createModel());
+        F2CommandRegistry registry = F2CommandRegistry.make(createModel());
 
         String text =
                 "`NORMAL`Получатель платежа: ОАО `BOLD+`ТЕПЛО-ЭНЕРГЕТИК`BOLD-`\n"

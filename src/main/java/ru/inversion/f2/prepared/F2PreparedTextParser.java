@@ -2,7 +2,6 @@ package ru.inversion.f2.prepared;
 
 import ru.inversion.f2.error.F2Errors;
 import ru.inversion.f2.command.F2CommandCall;
-import ru.inversion.f2.command.F2CommandCallParser;
 import ru.inversion.utils.ReaderScanner;
 import ru.inversion.utils.S;
 
@@ -32,6 +31,7 @@ public final class F2PreparedTextParser {
             if( ch == '\n' )
             {
                 flushText ( result, plain );
+
                 result.add( F2PreparedToken.newLine() );
 
                 continue;
@@ -39,9 +39,9 @@ public final class F2PreparedTextParser {
 
             if( ch == '`' )
             {
-                flushText(result, plain);
+                flushText( result, plain );
 
-                F2CommandCall call = readCommandCall(iter, text, ctx);
+                F2CommandCall call = readCommandCall( iter, text, ctx );
 
                 result.add( F2PreparedToken.command(call) );
 
@@ -56,14 +56,14 @@ public final class F2PreparedTextParser {
         return result;
     }
 
+    /** */
     private F2CommandCall readCommandCall(
-            Iterator<ReaderScanner.IContext> iter,
-            String sourceText,
-            ReaderScanner.IContext startCtx
+        Iterator<ReaderScanner.IContext> iter,
+        String sourceText,
+        ReaderScanner.IContext startCtx
     )
     {
-        final int startLine = startCtx.lineNum();
-        final int startSymb = startCtx.symbNum();
+        final ReaderScanner.Position position = startCtx.position();
 
         final StringBuilder sb = new StringBuilder();
 
@@ -75,7 +75,7 @@ public final class F2PreparedTextParser {
 
             char ch = ctx.current();
 
-            if (ch == '`') {
+            if( ch == '`' ) {
                 closed = true;
                 break;
             }
@@ -88,20 +88,20 @@ public final class F2PreparedTextParser {
             {
                 throw F2Errors.of(F2Errors.ErrorCode.COMMAND_CALL_INVALID)
                         .param("reason", "Command quote crosses line break")
-                        .param("line", startLine )
-                        .param("symb", startSymb )
-                        .param("text", sourceText);
+                        .param("line", position.lineNum() )
+                        .param("symb", position.symbNum() )
+                        .param("text", sourceText );
             }
 
             sb.append(ch);
-        }
+        }//end while
 
         if (!closed)
         {
             throw F2Errors.of(F2Errors.ErrorCode.COMMAND_CALL_INVALID)
                     .param("reason", "Unclosed command quote")
-                    .param("line", startLine)
-                    .param("symb", startSymb)
+                    .param("line", position.lineNum() )
+                    .param("symb", position.symbNum() )
                     .param("text", sourceText);
         }
 
@@ -109,12 +109,12 @@ public final class F2PreparedTextParser {
         {
             throw F2Errors.of(F2Errors.ErrorCode.COMMAND_CALL_INVALID)
                     .param("reason", "Empty command")
-                    .param("line", startLine)
-                    .param("symb", startSymb)
+                    .param("line", position.lineNum() )
+                    .param("symb", position.symbNum() )
                     .param("text", sourceText);
         }
 
-        return F2CommandCallParser.parse(sb.toString());
+        return F2CommandCall.parse( sb.toString() );
     }
 
     /** */

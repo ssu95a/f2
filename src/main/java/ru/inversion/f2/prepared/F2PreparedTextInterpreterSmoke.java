@@ -13,7 +13,7 @@ public final class F2PreparedTextInterpreterSmoke {
 
     public static void main(String[] args) {
 
-        F2CommandRegistry registry = F2CommandRegistry.from(createModel());
+        F2CommandRegistry registry = F2CommandRegistry.make(createModel());
 
         smokeUnderlineLine(registry);
         smokeNormalAndLineStep(registry);
@@ -52,11 +52,11 @@ public final class F2PreparedTextInterpreterSmoke {
         F2StyledLine line = doc.lines().get(0);
 
         assertEquals("Ф.И.О.      |", line.plainText());
-        assertEquals(Integer.valueOf(3), Integer.valueOf(line.runs().size()));
+        assertEquals(Integer.valueOf(3), Integer.valueOf(line.chunks().size()));
 
-        F2StyledTextRun r0 = line.runs().get(0);
-        F2StyledTextRun r1 = line.runs().get(1);
-        F2StyledTextRun r2 = line.runs().get(2);
+        F2StyledTextChunk r0 = line.chunks().get(0);
+        F2StyledTextChunk r1 = line.chunks().get(1);
+        F2StyledTextChunk r2 = line.chunks().get(2);
 
         assertEquals("Ф.И.О. ", r0.text());
         assertEquals(Boolean.FALSE, Boolean.valueOf(r0.style().underline()));
@@ -79,10 +79,10 @@ public final class F2PreparedTextInterpreterSmoke {
 
         F2StyledLine line = doc.lines().get(0);
 
-        assertEquals(Integer.valueOf(2), Integer.valueOf(line.runs().size()));
+        assertEquals(Integer.valueOf(2), Integer.valueOf(line.chunks().size()));
 
-        F2StyledTextRun r0 = line.runs().get(0);
-        F2StyledTextRun r1 = line.runs().get(1);
+        F2StyledTextChunk r0 = line.chunks().get(0);
+        F2StyledTextChunk r1 = line.chunks().get(1);
 
         assertEquals("A", r0.text());
         assertEquals(Boolean.TRUE, Boolean.valueOf(r0.style().bold()));
@@ -113,7 +113,7 @@ public final class F2PreparedTextInterpreterSmoke {
         assertEquals("A", doc.lines().get(0).plainText());
         assertEquals("B", doc.lines().get(1).plainText());
 
-        F2StyledTextRun b = doc.lines().get(1).runs().get(0);
+        F2StyledTextChunk b = doc.lines().get(1).chunks().get(0);
 
         assertEquals(Boolean.TRUE, Boolean.valueOf(b.style().underline()));
 
