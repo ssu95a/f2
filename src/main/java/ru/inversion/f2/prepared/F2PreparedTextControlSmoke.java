@@ -1,12 +1,9 @@
-package ru.inversion.f2;
+package ru.inversion.f2.prepared;
 
 import ru.inversion.f2.command.F2CommandRegistry;
 import ru.inversion.f2.ini.F2AltIniModel;
 import ru.inversion.f2.ini.F2MapAltIniModel;
-import ru.inversion.f2.prepared.F2PreparedTextInterpreter;
-import ru.inversion.f2.prepared.F2PreparedTextParser;
-import ru.inversion.f2.prepared.F2PreparedToken;
-import ru.inversion.f2.prepared.F2StyledDocument;
+
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -23,6 +20,7 @@ public final class F2PreparedTextControlSmoke {
         smokeDirectPageEnd(registry);
         smokeLineFeed(registry);
         smokePageEndKeepsStyle(registry);
+        smokeContentMode(registry);
 
         System.out.println("F2 prepared text control smoke OK");
     }
@@ -37,7 +35,15 @@ public final class F2PreparedTextControlSmoke {
         graphics.put("PAGE_END", "Page End=Yes;");
         graphics.put("FF", "Cmd=`PAGE_END`;");
 
+        graphics.put("BOLD+", "Bold=Yes;");
+        graphics.put("BOLD-", "Bold=No;");
+
         graphics.put("LF", "Lf=Yes;");
+
+        graphics.put(
+                "NORMAL",
+                "Name Font=Courier New;Size Font=10;Bold=No;Italic=No;Vertical Move=1/6;"
+        );
 
         return new F2MapAltIniModel(
                 Collections.<String, String>emptyMap(),
@@ -136,5 +142,64 @@ public final class F2PreparedTextControlSmoke {
                     "Expected [" + expected + "], actual [" + actual + "]"
             );
         }
+    }
+
+    private static void smokeContentMode(F2CommandRegistry registry) {
+
+        F2PreparedTextParser parser =
+                new F2PreparedTextParser();
+
+        F2PreparedContentModeDetector detector =
+                new F2PreparedContentModeDetector();
+
+        assertEquals(
+                F2PreparedContentMode.PLAIN,
+                detector.detect(
+                        parser.parse("Hello\nWorld"),
+                        registry
+                )
+        );
+
+        assertEquals(
+                F2PreparedContentMode.PLAIN_WITH_HEADER,
+                detector.detect(
+                        parser.parse("`NORMAL`\nHello\nWorld"),
+                        registry
+                )
+        );
+
+        assertEquals(
+                F2PreparedContentMode.PLAIN_WITH_HEADER,
+                detector.detect(
+                        parser.parse("`NORMAL`\nHello `UNDER+`World`UNDER-`"),
+                        registry
+                )
+        );
+
+        assertEquals(
+                F2PreparedContentMode.STYLED,
+                detector.detect(
+                        parser.parse("`NORMAL`\nHello `BOLD+`World`BOLD-`"),
+                        registry
+                )
+        );
+
+        assertEquals(
+                F2PreparedContentMode.PLAIN,
+                detector.detect(
+                        parser.parse("Hello`FF`World"),
+                        registry
+                )
+        );
+
+        assertEquals(
+                F2PreparedContentMode.STYLED,
+                detector.detect(
+                        parser.parse("Hello `LEFT=10`World"),
+                        registry
+                )
+        );
+
+        System.out.println("F2 prepared content mode smoke OK");
     }
 }

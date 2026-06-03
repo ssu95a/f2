@@ -16,20 +16,32 @@ import java.util.*;
 */
 public final class F2CommandRegistry {
 
+    private static final String INIT_COMMAND_NAME = "INIT";
+
+    private static final String NORMAL_STYLE_COMMAND_NAME = "NORMAL";
+
     /** */
     private final Map<String, F2CommandDef> commands;
 
     /** */
-
-    /** */
-    private F2CommandRegistry( Map<String, F2CommandDef> commands) {
+    private F2CommandRegistry( Map<String, F2CommandDef> commands ) {
         this.commands = Collections.unmodifiableMap( new LinkedHashMap<>(commands) );
     }
 
     /** */
-    public F2CommandRef initCommand( )
-    {
-        throw new UnsupportedOperationException( "initCommand" );
+    public F2CommandRef initCommand() {
+        return resolve (
+            F2CommandCall.of(INIT_COMMAND_NAME),
+            false
+        );
+    }
+
+    /** */
+    public F2CommandRef normalStyle() {
+        return resolve (
+            F2CommandCall.of(NORMAL_STYLE_COMMAND_NAME),
+            true
+        );
     }
 
     /** */
@@ -38,17 +50,32 @@ public final class F2CommandRegistry {
     }
 
     /** */
-    public F2CommandRef resolve( F2CommandCall call ) {
+    public F2CommandRef resolve(F2CommandCall call) {
+        return resolve(call, true);
+    }
+
+    /** */
+    public F2CommandRef resolve( F2CommandCall call, boolean required ) {
 
         if( call == null )
-            throw F2Errors.of( F2Errors.ErrorCode.COMMAND_CALL_INVALID ).param("call", null);
+        {
+            if( required )
+                throw F2Errors.of(F2Errors.ErrorCode.COMMAND_CALL_INVALID).param("call", null);
 
-        F2CommandDef def = find( call.name() );
+            return null;
+        }
+
+        F2CommandDef def = find(call.name());
 
         if( def == null )
-            throw F2Errors.commandNotFound( call.name(), call.raw() );
+        {
+            if( required )
+                throw F2Errors.commandNotFound( call.name(), call.raw() );
 
-        return new F2CommandRef( call, def );
+            return null;
+        }
+
+        return new F2CommandRef(call, def);
     }
 
     /** */
