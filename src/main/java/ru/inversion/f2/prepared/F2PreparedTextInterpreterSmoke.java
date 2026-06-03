@@ -18,7 +18,7 @@ public final class F2PreparedTextInterpreterSmoke {
         smokeUnderlineLine(registry);
         smokeNormalAndLineStep(registry);
         smokeNewLine(registry);
-
+        smokePreparedDocumentParser(registry);
         System.out.println("F2 prepared text interpreter smoke OK");
     }
 
@@ -99,6 +99,25 @@ public final class F2PreparedTextInterpreterSmoke {
         assertDoubleEquals(12.0d, line.lineStepPt());
 
         System.out.println("NORMAL style + line step OK");
+    }
+
+    private static void smokePreparedDocumentParser(F2CommandRegistry registry) {
+
+        F2PreparedDocument doc =
+                new F2PreparedDocumentParser().parse(
+                        "`NORMAL`\nHello `UNDER+`world`UNDER-`",
+                        registry
+                );
+
+        assertEquals(
+                F2PreparedContentMode.PLAIN_WITH_HEADER,
+                doc.contentMode()
+        );
+
+        if (doc.tokens().isEmpty())
+            throw new IllegalStateException("tokens is empty");
+
+        System.out.println("F2 prepared document parser smoke OK");
     }
 
     private static void smokeNewLine(F2CommandRegistry registry) {
