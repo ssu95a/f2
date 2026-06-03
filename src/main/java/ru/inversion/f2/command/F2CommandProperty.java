@@ -68,6 +68,15 @@ public enum F2CommandProperty {
         return U.in( effect, TEXT_METRICS, LINE_LAYOUT, FLOW,  DOCUMENT_SETUP );
     }
 
+    public boolean affectsTextLayout() {
+        return U.in(effect, TEXT_METRICS, LINE_LAYOUT);
+    }
+
+    /** */
+    public boolean isFormatting() {
+        return affectsTextLayout();
+    }
+
     /** */
     public static F2CommandProperty fromIniName(String name)
     {
