@@ -1,6 +1,7 @@
 package ru.inversion.f2.awt;
 
 import ru.inversion.f2.prepared.F2StyledPage;
+import ru.inversion.f2.print.F2PrintPageSetup;
 import ru.inversion.utils.Checks;
 
 import java.awt.*;
@@ -10,6 +11,35 @@ import java.awt.image.BufferedImage;
 public final class F2AwtPreviewRenderer {
 
     private final F2AwtPagePainter painter = new F2AwtPagePainter();
+
+    public BufferedImage render (
+        F2StyledPage page,
+        F2PrintPageSetup pageSetup
+    )
+    {
+        return render(
+                page,
+                F2AwtPageRenderConfig.fromPrintPageSetup(pageSetup)
+                        .withShrinkToFit(true)
+        );
+    }
+
+    public BufferedImage render (
+        F2StyledPage page,
+        F2PrintPageSetup pageSetup,
+        double dpi,
+        boolean debugOverlay
+    )
+    {
+        return render(
+                page,
+                F2AwtPageRenderConfig.fromPrintPageSetup(
+                        pageSetup,
+                        dpi,
+                        debugOverlay
+                ).withShrinkToFit(true)
+        );
+    }
 
     public BufferedImage render (
         F2StyledPage page,
