@@ -1,6 +1,7 @@
 package ru.inversion.f2.print;
 
 import org.junit.Test;
+import ru.inversion.f2.awt.F2AwtPageRenderConfig;
 
 import javax.print.PrintService;
 import javax.print.attribute.HashPrintRequestAttributeSet;
@@ -91,6 +92,63 @@ public class F2PrintPageSetupTest {
         assertEquals(20.0d, setup.imageableYPt(), 0.001d);
         assertEquals(170.0d, setup.imageableWidthPt(), 0.001d);
         assertEquals(260.0d, setup.imageableHeightPt(), 0.001d);
+    }
+
+    @Test
+    public void smokePageRenderConfigUsesPrintPageSetupGeometry() {
+
+        PrintService printService = mock(PrintService.class);
+        when(printService.getName()).thenReturn("Smoke Printer");
+
+        F2PrintPageSetup setup = F2PrintPageSetup.builder()
+                .printService(printService)
+                .attributes(new HashPrintRequestAttributeSet())
+                .pageFormat(newPageFormat())
+                .matrixPrinter(false)
+                .build();
+
+        F2AwtPageRenderConfig config =
+                F2AwtPageRenderConfig.fromPrintPageSetup(setup);
+
+        assertEquals(200.0d, config.paperWidthPt(), 0.001d);
+        assertEquals(300.0d, config.paperHeightPt(), 0.001d);
+        assertEquals(10.0d, config.imageableXPt(), 0.001d);
+        assertEquals(20.0d, config.imageableYPt(), 0.001d);
+        assertEquals(170.0d, config.imageableWidthPt(), 0.001d);
+        assertEquals(260.0d, config.imageableHeightPt(), 0.001d);
+
+        assertEquals(144.0d, config.dpi(), 0.001d);
+        assertEquals(2.0d, config.scale(), 0.001d);
+        assertEquals(400, config.imageWidthPx());
+        assertEquals(600, config.imageHeightPx());
+        assertFalse(config.debugOverlay());
+    }
+
+    @Test
+    public void smokePageRenderConfigUsesExplicitDpiAndDebugOverlay() {
+
+        PrintService printService = mock(PrintService.class);
+        when(printService.getName()).thenReturn("Smoke Printer");
+
+        F2PrintPageSetup setup = F2PrintPageSetup.builder()
+                .printService(printService)
+                .attributes(new HashPrintRequestAttributeSet())
+                .pageFormat(newPageFormat())
+                .matrixPrinter(false)
+                .build();
+
+        F2AwtPageRenderConfig config =
+                F2AwtPageRenderConfig.fromPrintPageSetup(
+                        setup,
+                        72.0d,
+                        true
+                );
+
+        assertEquals(72.0d, config.dpi(), 0.001d);
+        assertEquals(1.0d, config.scale(), 0.001d);
+        assertEquals(200, config.imageWidthPx());
+        assertEquals(300, config.imageHeightPx());
+        assertTrue(config.debugOverlay());
     }
 
     @Test
