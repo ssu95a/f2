@@ -25,7 +25,7 @@ public final class F2AwtPageable implements Pageable {
 
         this.document = document;
         this.pageSetup = pageSetup;
-        this.printable = new F2AwtDocumentPrintable(document);
+        this.printable = new F2AwtDocumentPrintable(document, pageSetup);
     }
 
     @Override
