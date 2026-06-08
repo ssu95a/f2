@@ -1,6 +1,7 @@
 package ru.inversion.f2.awt;
 
 import ru.inversion.f2.prepared.F2StyledDocument;
+import ru.inversion.f2.print.F2PrintPageSetup;
 import ru.inversion.utils.Checks;
 
 import java.awt.Graphics;
@@ -13,17 +14,25 @@ public final class F2AwtDocumentPrintable implements Printable {
 
     private final F2StyledDocument document;
     private final F2AwtPagePainter painter;
+    private final F2PrintPageSetup pageSetup;
 
-    public F2AwtDocumentPrintable(F2StyledDocument document)
-    {
-        this( document, new F2AwtPagePainter() );
+    public F2AwtDocumentPrintable(
+            F2StyledDocument document,
+            F2PrintPageSetup pageSetup
+    ) {
+        this(document, pageSetup, new F2AwtPagePainter());
     }
 
     /** */
-    public F2AwtDocumentPrintable( F2StyledDocument document, F2AwtPagePainter painter )
+    public F2AwtDocumentPrintable(
+            F2StyledDocument document,
+            F2PrintPageSetup pageSetup,
+            F2AwtPagePainter painter
+    )
     {
-        this.document = Checks.Require.object(document,"document");
-        this.painter  = Checks.Require.object(painter ,"painter" );
+        this.document  = Checks.Require.object(document, "document");
+        this.pageSetup = Checks.Require.object(pageSetup, "pageSetup");
+        this.painter   = Checks.Require.object(painter, "painter");
     }
 
     @Override
@@ -35,7 +44,9 @@ public final class F2AwtDocumentPrintable implements Printable {
         if( !(graphics instanceof Graphics2D) )
             throw new IllegalArgumentException("graphics is not Graphics2D");
 
-        F2AwtPageRenderConfig config = F2AwtPageRenderConfig.fromPageFormat( pageFormat, 72.0d, false ).withShrinkToFit(true);
+        F2AwtPageRenderConfig config =
+                F2AwtPageRenderConfig.fromPrintPageSetup(pageSetup)
+                        .withShrinkToFit(true);
 
         painter.paint( (Graphics2D) graphics, document.pages().get(pageIndex), config );
 
