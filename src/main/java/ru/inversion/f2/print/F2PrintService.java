@@ -9,8 +9,6 @@ import ru.inversion.f2.prepared.*;
 import ru.inversion.utils.Checks;
 
 
-import javax.print.attribute.PrintRequestAttributeSet;
-import java.awt.print.PageFormat;
 import java.awt.print.PrinterJob;
 import java.lang.invoke.MethodHandles;
 
@@ -62,33 +60,22 @@ public final class F2PrintService {
     }
 
     /** */
-    /* */
-    private F2PrintResult printGraphics(
-            F2StyledDocument document,
-            F2PrinterMan printerMan
-    ) throws Exception {
+    private F2PrintResult printGraphics( F2StyledDocument document, F2PrinterMan printerMan ) throws Exception
+    {
+        F2PrintPageSetup setup = printerMan.currentPrintPageSetup();
 
-        F2PrintPageSetup setup =
-                printerMan.currentPrintPageSetup();
-
-        PrinterJob job =
-                PrinterJob.getPrinterJob();
+        PrinterJob job = PrinterJob.getPrinterJob();
 
         job.setPrintService(
-                setup.printService()
+            setup.printService()
         );
 
         job.setJobName("F2 report");
 
-        job.setPageable(
-                new F2AwtPageable(
-                        document,
-                        setup
-                )
-        );
+        job.setPageable( new F2AwtPageable( document, setup ) );
 
-        job.print(
-                setup.attributesCopy()
+        job.print (
+            setup.attributesCopy()
         );
 
         return new F2PrintResult(

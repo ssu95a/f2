@@ -10,8 +10,6 @@ import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
-import java.awt.print.PageFormat;
-import java.awt.print.PrinterJob;
 import java.lang.invoke.MethodHandles;
 
 public final class F2PrinterMan {
@@ -244,33 +242,4 @@ public final class F2PrinterMan {
         return iniModel.driverRef(printerName);
     }
 
-    public PageFormat currentPageFormat() {
-
-        PrintService service = currentPrintService();
-
-        if (service == null)
-            return PrinterJob.getPrinterJob().defaultPage();
-
-        return pageFormat(service);
-    }
-
-    public PageFormat pageFormat(PrintService service) {
-
-        Checks.Require.object(service, "service");
-
-        try {
-            PrinterJob job = PrinterJob.getPrinterJob();
-            job.setPrintService(service);
-            return job.defaultPage();
-        }
-        catch (Exception ex) {
-            log.warn(
-                    "Cannot obtain PageFormat for printer: {}",
-                    service.getName(),
-                    ex
-            );
-
-            return PrinterJob.getPrinterJob().defaultPage();
-        }
-    }
 }
