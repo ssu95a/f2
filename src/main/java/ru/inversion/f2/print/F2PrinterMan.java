@@ -8,6 +8,8 @@ import ru.inversion.utils.S;
 
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
+import javax.print.attribute.HashPrintRequestAttributeSet;
+import javax.print.attribute.PrintRequestAttributeSet;
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterJob;
 import java.lang.invoke.MethodHandles;
@@ -22,13 +24,22 @@ public final class F2PrinterMan {
 
     private PrintService selectedPrintService;
 
+    private PrintRequestAttributeSet selectedPrintAttributes =
+            new HashPrintRequestAttributeSet();
+
     private F2PrinterMan( F2AltIniModel iniModel ) {
         this.iniModel = Checks.Require.object(iniModel, "iniModel");
     }
 
+    /** */
+    public F2PrintSettings currentPrintSettings() {
+        return new F2PrintSettings( currentPrintService(), selectedPrintAttributes );
+    }
+
+    /** */
     public static F2PrinterMan init( F2AltIniModel iniModel )
     {
-        Checks.Require.object(iniModel, "iniModel");
+        Checks.Require.object( iniModel, "iniModel" );
 
         synchronized (F2PrinterMan.class) {
             instance = new F2PrinterMan(iniModel);
@@ -36,6 +47,7 @@ public final class F2PrinterMan {
         }
     }
 
+    /** */
     public static F2PrinterMan getInstance() {
 
         F2PrinterMan result = instance;

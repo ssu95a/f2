@@ -8,7 +8,8 @@ import ru.inversion.f2.command.F2CommandRegistry;
 import ru.inversion.f2.prepared.*;
 import ru.inversion.utils.Checks;
 
-import javax.print.PrintService;
+
+import javax.print.attribute.PrintRequestAttributeSet;
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterJob;
 import java.lang.invoke.MethodHandles;
@@ -44,6 +45,7 @@ public final class F2PrintService {
         return preparedTextInterpreter.interpret( prepared.tokens(), registry );
     }
 
+    /** */
     public F2PrintResult printDocument(F2StyledDocument document) throws Exception {
 
         Checks.Require.object(document, "document");
@@ -59,33 +61,24 @@ public final class F2PrintService {
         return printGraphics(document, printerMan);
     }
 
-    /* */
+    /** */
     private F2PrintResult printGraphics( F2StyledDocument document, F2PrinterMan printerMan ) throws Exception {
 
-        PrintService service =
-                printerMan.currentPrintService();
+        F2PrintSettings settings = printerMan.currentPrintSettings();
 
-        PageFormat pageFormat =
-                printerMan.currentPageFormat();
+        PrinterJob job = PrinterJob.getPrinterJob();
 
-        PrinterJob job =
-                PrinterJob.getPrinterJob();
+        if( settings.hasPrintService() )
+            job.setPrintService( settings.printService() );
 
-        if (service != null)
-            job.setPrintService(service);
+        PrintRequestAttributeSet attrs = settings.attributesCopy();
 
-        job.setJobName("F2 report");
+        PageFormat pageFormat = job.getPageFormat(attrs);
 
-        job.setPageable(
-                new F2AwtPageable(document, pageFormat)
-        );
+        job.setPageable( new F2AwtPageable(document, pageFormat) );
 
-        job.print();
+        job.print(attrs);
 
-        return new F2PrintResult(
-                printerMan.currentPrinterName(),
-                printerMan.currentDriverRef(),
-                document.pageCount()
-        );
+        return new F2PrintResult( printerMan.currentPrinterName(), printerMan.currentDriverRef(), document.pageCount() );
     }
 }

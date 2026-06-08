@@ -46,7 +46,7 @@ public final class F2CommandRegistry {
 
     /** */
     public F2CommandDef find( String name ) {
-        return name == null ?  null : commands.get( name.trim() );
+        return name == null ? null : commands.get(normalizeCommandName(name));
     }
 
     /** */
@@ -65,7 +65,7 @@ public final class F2CommandRegistry {
             return null;
         }
 
-        F2CommandDef def = find(call.name());
+        F2CommandDef def = find( call.name() );
 
         if( def == null )
         {
@@ -100,7 +100,9 @@ public final class F2CommandRegistry {
 
         for( Map.Entry<String, String> e : model.codeGraphics().entrySet() )
         {
-            String name = model.cleanCommandName(e.getKey());
+            String name = normalizeCommandName(
+                model.cleanCommandName(e.getKey())
+            );
 
             List<F2CommandPropertyValue> properties = propertyParser.parse(e.getValue());
 
@@ -114,6 +116,10 @@ public final class F2CommandRegistry {
         }
 
         return new F2CommandRegistry(result);
+    }
+
+    private static String normalizeCommandName(String name) {
+        return F2CommandCall.of(name).name();
     }
 
 }
