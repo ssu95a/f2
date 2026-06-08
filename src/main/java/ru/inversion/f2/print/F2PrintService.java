@@ -62,23 +62,38 @@ public final class F2PrintService {
     }
 
     /** */
-    private F2PrintResult printGraphics( F2StyledDocument document, F2PrinterMan printerMan ) throws Exception {
+    /* */
+    private F2PrintResult printGraphics(
+            F2StyledDocument document,
+            F2PrinterMan printerMan
+    ) throws Exception {
 
-        F2PrintSettings settings = printerMan.currentPrintSettings();
+        F2PrintPageSetup setup =
+                printerMan.currentPrintPageSetup();
 
-        PrinterJob job = PrinterJob.getPrinterJob();
+        PrinterJob job =
+                PrinterJob.getPrinterJob();
 
-        if( settings.hasPrintService() )
-            job.setPrintService( settings.printService() );
+        job.setPrintService(
+                setup.printService()
+        );
 
-        PrintRequestAttributeSet attrs = settings.attributesCopy();
+        job.setJobName("F2 report");
 
-        PageFormat pageFormat = job.getPageFormat(attrs);
+        job.setPageable(
+                new F2AwtPageable(
+                        document,
+                        setup
+                )
+        );
 
-        job.setPageable( new F2AwtPageable(document, pageFormat) );
+        job.print(
+                setup.attributesCopy()
+        );
 
-        job.print(attrs);
-
-        return new F2PrintResult( printerMan.currentPrinterName(), printerMan.currentDriverRef(), document.pageCount() );
-    }
-}
+        return new F2PrintResult(
+                setup.printService().getName(),
+                printerMan.currentDriverRef(),
+                document.pageCount()
+        );
+    }}
