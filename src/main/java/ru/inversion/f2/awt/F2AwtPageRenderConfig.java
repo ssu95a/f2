@@ -1,5 +1,7 @@
 package ru.inversion.f2.awt;
 
+import ru.inversion.f2.print.F2PrintPageSetup;
+
 import java.awt.print.PageFormat;
 import java.awt.print.Paper;
 
@@ -127,6 +129,7 @@ public final class F2AwtPageRenderConfig {
                 value
         );
     }
+
     public static F2AwtPageRenderConfig a4Portrait() {
         /*
          * A4: 210 x 297 mm.
@@ -147,6 +150,36 @@ public final class F2AwtPageRenderConfig {
                 heightPt - marginPt * 2.0d,
                 DEFAULT_DPI,
                 false
+        );
+    }
+
+    public static F2AwtPageRenderConfig fromPrintPageSetup(
+            F2PrintPageSetup setup
+    ) {
+        return fromPrintPageSetup(
+                setup,
+                DEFAULT_DPI,
+                false
+        );
+    }
+
+    public static F2AwtPageRenderConfig fromPrintPageSetup(
+            F2PrintPageSetup setup,
+            double dpi,
+            boolean debugOverlay
+    ) {
+        if (setup == null)
+            throw new IllegalArgumentException("setup is null");
+
+        return new F2AwtPageRenderConfig(
+                setup.pageWidthPt(),
+                setup.pageHeightPt(),
+                setup.imageableXPt(),
+                setup.imageableYPt(),
+                setup.imageableWidthPt(),
+                setup.imageableHeightPt(),
+                dpi,
+                debugOverlay
         );
     }
 
