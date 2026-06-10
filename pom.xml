@@ -27,6 +27,7 @@
         <!-- Версии зависимостей -->
         <slf4j.version>1.7.36</slf4j.version>
         <logback.version>1.2.13</logback.version>
+        <javafx.version>11.0.2</javafx.version>
 
         <junit.version>4.13.2</junit.version>
         <mockito.version>3.12.4</mockito.version>
@@ -68,6 +69,18 @@
             <artifactId>jul-to-slf4j</artifactId>
         </dependency>
 
+        <!-- JavaFX for modern JDK dev runtime. Remove/profile out for real JDK 8 runtime. -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-swing</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
 
         <!-- Тестирование -->
         <dependency>
@@ -93,8 +106,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven.compiler.plugin.version}</version>
                 <configuration>
-                    <source>11</source>
-                    <target>11</target>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
                     <encoding>${project.build.sourceEncoding}</encoding>
                     <showWarnings>true</showWarnings>
                     <showDeprecation>true</showDeprecation>
@@ -221,8 +234,8 @@
                 <jar.classpath>../japp/JInvFore.jar bil.jar</jar.classpath>
                 <skip.dependency.copy>true</skip.dependency.copy>
 
-                <ansi.color>\u001B[32m</ansi.color>
-                <ansi.reset>\u001B[0m</ansi.reset>
+                <ansi.color>[32m</ansi.color>
+                <ansi.reset>[0m</ansi.reset>
             </properties>
 
             <build>
