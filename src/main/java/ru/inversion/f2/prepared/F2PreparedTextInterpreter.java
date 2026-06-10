@@ -128,7 +128,10 @@ public final class F2PreparedTextInterpreter {
         }
 
         private void finishCurrentPage() {
-            pages.add(new F2StyledPage(currentPageLines));
+            pages.add(new F2StyledPage(
+                    currentPageLines,
+                    state.orientation()
+            ));
             currentPageLines = new ArrayList<F2StyledLine>();
         }
 
