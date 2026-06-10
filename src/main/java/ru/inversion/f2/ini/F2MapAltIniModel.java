@@ -108,7 +108,7 @@ public final class F2MapAltIniModel implements F2AltIniModel {
         if( source == null || source.isEmpty() )
             return Collections.emptyMap();
 
-        Map<String, String> result = new LinkedHashMap<String, String>();
+        Map< String, String > result = new LinkedHashMap<>();
 
         for( Map.Entry<String, String> e : source.entrySet() ) {
             result.put(cleanName(e.getKey()), e.getValue());
