@@ -9,6 +9,8 @@ import ru.inversion.f2.print.F2PrintPageSetup;
 import ru.inversion.f2.print.F2PrintService;
 
 import javax.imageio.ImageIO;
+import javax.print.attribute.HashPrintRequestAttributeSet;
+import javax.print.attribute.standard.MediaPrintableArea;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -39,6 +41,10 @@ import static org.junit.Assert.assertFalse;
  *   -Df2.preview.smoke.dpi=144
  *   -Df2.preview.smoke.charset=windows-1251
  *   -Df2.preview.smoke.ini.charset=windows-1251
+ *   -Df2.preview.smoke.media.printable.mm=5,5,200,287
+ *   -Df2.preview.smoke.margin.mm=5
+ *   -Df2.preview.smoke.paper.width.mm=210
+ *   -Df2.preview.smoke.paper.height.mm=297
  */
 public class F2AwtPreviewManualSmokeTest {
 
@@ -88,6 +94,8 @@ public class F2AwtPreviewManualSmokeTest {
                     .printerMan()
                     .selectPrinterName(printerName.trim());
         }
+
+        applyPrintableAreaOverrideIfRequested();
 
         String text = new String(
                 Files.readAllBytes(inputPath),
@@ -145,6 +153,126 @@ public class F2AwtPreviewManualSmokeTest {
 
         System.out.println("F2 preview smoke PNG: " + outputPath.toAbsolutePath());
         System.out.println("F2 preview smoke setup: " + setup.geometryToString());
+    }
+
+    private static void applyPrintableAreaOverrideIfRequested() {
+
+        MediaPrintableArea mediaPrintableArea =
+                mediaPrintableAreaFromProperty();
+
+        if (mediaPrintableArea == null)
+            mediaPrintableArea = mediaPrintableAreaFromMarginProperty();
+
+        if (mediaPrintableArea == null)
+            return;
+
+        HashPrintRequestAttributeSet attributes =
+                new HashPrintRequestAttributeSet();
+
+        attributes.add(mediaPrintableArea);
+
+        F2Runtime.get()
+                .printerMan()
+                .selectPrintAttributes(attributes);
+
+        System.out.println("F2 preview smoke mediaPrintableArea override: " + mediaPrintableArea);
+    }
+
+    private static MediaPrintableArea mediaPrintableAreaFromProperty() {
+
+        String value = System.getProperty("f2.preview.smoke.media.printable.mm");
+
+        if (value == null || value.trim().length() == 0)
+            return null;
+
+        String[] parts = value.split(",");
+
+        if (parts.length != 4)
+            throw new IllegalArgumentException(
+                    "f2.preview.smoke.media.printable.mm must be x,y,width,height in mm"
+            );
+
+        return new MediaPrintableArea(
+                (float) parsePositiveDouble(parts[0], "mediaPrintableArea.x"),
+                (float) parsePositiveDouble(parts[1], "mediaPrintableArea.y"),
+                (float) parsePositiveDouble(parts[2], "mediaPrintableArea.width"),
+                (float) parsePositiveDouble(parts[3], "mediaPrintableArea.height"),
+                MediaPrintableArea.MM
+        );
+    }
+
+    private static MediaPrintableArea mediaPrintableAreaFromMarginProperty() {
+
+        String value = System.getProperty("f2.preview.smoke.margin.mm");
+
+        if (value == null || value.trim().length() == 0)
+            return null;
+
+        double marginMm = parseNonNegativeDouble(value, "f2.preview.smoke.margin.mm");
+
+        double paperWidthMm = Double.parseDouble(
+                System.getProperty(
+                        "f2.preview.smoke.paper.width.mm",
+                        "210"
+                )
+        );
+
+        double paperHeightMm = Double.parseDouble(
+                System.getProperty(
+                        "f2.preview.smoke.paper.height.mm",
+                        "297"
+                )
+        );
+
+        double printableWidthMm = paperWidthMm - marginMm * 2.0d;
+        double printableHeightMm = paperHeightMm - marginMm * 2.0d;
+
+        if (printableWidthMm <= 0.0d || printableHeightMm <= 0.0d) {
+            throw new IllegalArgumentException(
+                    "Printable area is empty: paper="
+                            + paperWidthMm
+                            + "x"
+                            + paperHeightMm
+                            + " mm, margin="
+                            + marginMm
+                            + " mm"
+            );
+        }
+
+        return new MediaPrintableArea(
+                (float) marginMm,
+                (float) marginMm,
+                (float) printableWidthMm,
+                (float) printableHeightMm,
+                MediaPrintableArea.MM
+        );
+    }
+
+    private static double parsePositiveDouble(
+            String value,
+            String name
+    ) {
+        double result = parseNonNegativeDouble(value, name);
+
+        if (result <= 0.0d)
+            throw new IllegalArgumentException(name + " <= 0");
+
+        return result;
+    }
+
+    private static double parseNonNegativeDouble(
+            String value,
+            String name
+    ) {
+        if (value == null || value.trim().length() == 0)
+            throw new IllegalArgumentException(name + " is empty");
+
+        double result = Double.parseDouble(value.trim().replace(',', '.'));
+
+        if (result < 0.0d)
+            throw new IllegalArgumentException(name + " < 0");
+
+        return result;
     }
 
     private static Charset charsetProperty(
