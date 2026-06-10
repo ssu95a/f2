@@ -1,5 +1,6 @@
 package ru.inversion.f2.awt;
 
+import ru.inversion.f2.prepared.F2StyledPage;
 import ru.inversion.f2.print.F2PrintPageSetup;
 
 import java.awt.print.PageFormat;
@@ -165,6 +166,18 @@ public final class F2AwtPageRenderConfig {
 
     public static F2AwtPageRenderConfig fromPrintPageSetup(
             F2PrintPageSetup setup,
+            F2StyledPage page
+    ) {
+        return fromPrintPageSetup(
+                setup,
+                page,
+                DEFAULT_DPI,
+                false
+        );
+    }
+
+    public static F2AwtPageRenderConfig fromPrintPageSetup(
+            F2PrintPageSetup setup,
             double dpi,
             boolean debugOverlay
     ) {
@@ -180,6 +193,39 @@ public final class F2AwtPageRenderConfig {
                 setup.imageableHeightPt(),
                 dpi,
                 debugOverlay
+        );
+    }
+
+    public static F2AwtPageRenderConfig fromPrintPageSetup(
+            F2PrintPageSetup setup,
+            F2StyledPage page,
+            double dpi,
+            boolean debugOverlay
+    ) {
+        F2AwtPageRenderConfig config = fromPrintPageSetup(
+                setup,
+                dpi,
+                debugOverlay
+        );
+
+        if (page == null || !page.isLandscape())
+            return config;
+
+        return config.asLandscape();
+    }
+
+    private F2AwtPageRenderConfig asLandscape() {
+        return new F2AwtPageRenderConfig(
+                paperHeightPt,
+                paperWidthPt,
+                imageableYPt,
+                imageableXPt,
+                imageableHeightPt,
+                imageableWidthPt,
+                dpi,
+                debugOverlay,
+                contentScale,
+                shrinkToFit
         );
     }
 
