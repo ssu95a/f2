@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.inversion.f2.prepared.F2StyledLine;
 import ru.inversion.f2.prepared.F2StyledPage;
+import ru.inversion.utils.Checks;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
@@ -16,16 +17,17 @@ public final class F2AwtPagePainter {
 
     private static final double DEFAULT_MIN_CONTENT_SCALE = 0.80d;
 
-
-    private static final class PageContentMetrics {
-
+    /** */
+    private static final class PageContentMetrics
+    {
         private final double widthPt;
         private final double heightPt;
 
         private PageContentMetrics(
-                double widthPt,
-                double heightPt
-        ) {
+            double widthPt,
+            double heightPt
+        )
+        {
             this.widthPt = widthPt;
             this.heightPt = heightPt;
         }
@@ -34,16 +36,10 @@ public final class F2AwtPagePainter {
     /** */
     private final F2AwtLineRenderer lineRenderer = new F2AwtLineRenderer();
 
+    /** */
     public void paint( Graphics2D g, F2StyledPage page, F2AwtPageRenderConfig config )
     {
-        if( g == null )
-            throw new IllegalArgumentException("g is null");
-
-        if( page == null )
-            throw new IllegalArgumentException("page is null");
-
-        if( config == null )
-            throw new IllegalArgumentException("config is null");
+        Checks.Require.objects( g, "g", page, "page", config, "config" );
 
         paintPaper( g, config );
 
@@ -53,17 +49,16 @@ public final class F2AwtPagePainter {
         paintScaledPageContent( g, page, config );
     }
 
-    private void paintScaledPageContent(
-            Graphics2D g,
-            F2StyledPage page,
-            F2AwtPageRenderConfig config
-    ) {
+    /** */
+    private void paintScaledPageContent( Graphics2D g, F2StyledPage page, F2AwtPageRenderConfig config )
+    {
         double scale = resolveContentScale(g, page, config);
 
         AffineTransform oldTransform = g.getTransform();
 
         try {
-            g.translate(config.imageableXPt(), config.imageableYPt());
+
+            g.translate( config.imageableXPt(), config.imageableYPt() );
             g.scale(scale, scale);
 
             paintPageContent(g, page);
