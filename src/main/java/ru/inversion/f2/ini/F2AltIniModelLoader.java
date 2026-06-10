@@ -18,16 +18,16 @@ public final class F2AltIniModelLoader {
 
     public F2AltIniModel load( Path iniFile, Charset charset ) throws Exception {
 
-        log.info("Loading F2 ALT INI: file={}, charset={}", iniFile, charset);
+        log.info( "Loading F2 ALT INI: file={}, charset={}", iniFile, charset );
 
-        Map<String, String> commands = new LinkedHashMap<>();
-        Map<String, String> codeText = new LinkedHashMap<>();
+        Map<String, String> commands     = new LinkedHashMap<>();
+        Map<String, String> codeText     = new LinkedHashMap<>();
         Map<String, String> codeGraphics = new LinkedHashMap<>();
-        Map<String, String> driverRef = new LinkedHashMap<>();
+        Map<String, String> driverRef    = new LinkedHashMap<>();
 
         String section = IniFileEvent.DEFAULT_SECTION;
 
-        try (IniFileEventReader reader = IniFileEventReader.newBuilder().iniFile(iniFile).charset(charset).semicolonPartOfValue(true).hashPartOfValue(false).build() )
+        try( IniFileEventReader reader = IniFileEventReader.newBuilder().iniFile(iniFile).charset(charset).semicolonPartOfValue(true).hashPartOfValue(false).build() )
         {
             while( reader.hasNext() )
             {
@@ -38,7 +38,7 @@ public final class F2AltIniModelLoader {
                     continue;
                 }
 
-                if( e.type() != IniFileEvent.Type.Parameter)
+                if( e.type() != IniFileEvent.Type.Parameter )
                     continue;
 
                 Map<String, String> target = targetMap (
@@ -58,29 +58,29 @@ public final class F2AltIniModelLoader {
         return new F2MapAltIniModel( commands, codeText, codeGraphics, driverRef );
     }
 
-    /**
-     *
-     */
+    /** */
     private static String normalizeSectionName(String section) {
-        if (section == null)
+
+        if( section == null )
             return S.EMPTY_STRING;
 
         String s = section.trim();
         /*
          * Историческая опечатка в старом INI.
          */
-        if ("CodeGraphincs".equalsIgnoreCase(s))
+        if( "CodeGraphincs".equalsIgnoreCase(s) )
             return "CodeGraphics";
 
         return s;
     }
 
-    private static Map<String, String> targetMap(
-            String section,
-            Map<String, String> commands,
-            Map<String, String> codeText,
-            Map<String, String> codeGraphics,
-            Map<String, String> driverRef
+    /** */
+    private static Map<String, String> targetMap (
+        String section,
+        Map<String, String> commands,
+        Map<String, String> codeText,
+        Map<String, String> codeGraphics,
+        Map<String, String> driverRef
     )
     {
         if( "Commands".equalsIgnoreCase(section) )

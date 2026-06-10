@@ -94,13 +94,14 @@ public final class F2MapAltIniModel implements F2AltIniModel {
     /** */
     private static String normalizeDriverRef(String value) {
         return value == null
-                ? S.EMPTY_STRING
-                : value.trim()
-                .replace('_', ' ')
-                .replace('-', ' ')
-                .replaceAll("\\s+", " ")
-                .toUpperCase(Locale.ENGLISH);
+            ? S.EMPTY_STRING
+            : value.trim()
+            .replace('_', ' ')
+            .replace('-', ' ')
+            .replaceAll("\\s+", " ")
+            .toUpperCase(Locale.ENGLISH);
     }
+
     /** */
     private static Map<String, String> cleanCommandMap( Map<String, String> source )
     {
