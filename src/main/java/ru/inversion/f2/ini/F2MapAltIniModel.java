@@ -81,12 +81,14 @@ public final class F2MapAltIniModel implements F2AltIniModel {
         return isDriverRefMode( printerName, DRIVER_REF_CODE_GRAPHICS );
     }
 
-    private boolean isDriverRefMode(
-            String printerName,
-            String expectedMode
-    ) {
+    /** */
+    private boolean isDriverRefMode (
+        String printerName,
+        String expectedMode
+    )
+    {
         String value = driverRef(printerName);
-        if (S.isNullOrEmpty(value))
+        if( S.isNullOrEmpty(value) )
             return false;
         return normalizeDriverRef(value).equals(normalizeDriverRef(expectedMode));
     }
@@ -111,7 +113,7 @@ public final class F2MapAltIniModel implements F2AltIniModel {
         Map< String, String > result = new LinkedHashMap<>();
 
         for( Map.Entry<String, String> e : source.entrySet() ) {
-            result.put(cleanName(e.getKey()), e.getValue());
+             result.put(cleanName(e.getKey()), e.getValue());
         }
 
         return Collections.unmodifiableMap(result);

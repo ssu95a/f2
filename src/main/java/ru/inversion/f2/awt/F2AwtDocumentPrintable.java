@@ -1,6 +1,7 @@
 package ru.inversion.f2.awt;
 
 import ru.inversion.f2.prepared.F2StyledDocument;
+import ru.inversion.f2.prepared.F2StyledPage;
 import ru.inversion.f2.print.F2PrintPageSetup;
 import ru.inversion.utils.Checks;
 
@@ -17,9 +18,10 @@ public final class F2AwtDocumentPrintable implements Printable {
     private final F2PrintPageSetup pageSetup;
 
     public F2AwtDocumentPrintable(
-            F2StyledDocument document,
-            F2PrintPageSetup pageSetup
-    ) {
+        F2StyledDocument document,
+        F2PrintPageSetup pageSetup
+    )
+    {
         this(document, pageSetup, new F2AwtPagePainter());
     }
 
@@ -38,17 +40,28 @@ public final class F2AwtDocumentPrintable implements Printable {
     @Override
     public int print( Graphics graphics, PageFormat pageFormat, int pageIndex )
     {
-        if( pageIndex < 0 || pageIndex >= document.pageCount() )
-            return NO_SUCH_PAGE;
-
-        if( !(graphics instanceof Graphics2D) )
-            throw new IllegalArgumentException("graphics is not Graphics2D");
+        F2StyledPage page = document.pages().get(pageIndex);
 
         F2AwtPageRenderConfig config =
-                F2AwtPageRenderConfig.fromPrintPageSetup(pageSetup)
-                        .withShrinkToFit(true);
+                F2AwtPageRenderConfig.fromPageFormat(
+                        pageFormat,
+                        72.0d,
+                        false
+                ).withShrinkToFit(true);
 
-        painter.paint( (Graphics2D) graphics, document.pages().get(pageIndex), config );
+        System.out.println(
+                "PRINT pageIndex=" + pageIndex
+                        + ", pageLandscape=" + page.isLandscape()
+                        + ", pfOrientation=" + pageFormat.getOrientation()
+                        + ", pf=[" + pageFormat.getWidth() + "x" + pageFormat.getHeight() + "]"
+                        + ", imageable=[" + pageFormat.getImageableX()
+                        + "," + pageFormat.getImageableY()
+                        + "," + pageFormat.getImageableWidth()
+                        + "," + pageFormat.getImageableHeight()
+                        + "]"
+        );
+
+        painter.paint((Graphics2D) graphics, page, config);
 
         return PAGE_EXISTS;
     }

@@ -24,7 +24,7 @@ import java.nio.file.Paths;
 public class F2FxPreviewManualSmokeApp extends Application {
 
     private static final String DEFAULT_INPUT_FILE =
-            "d:\\Java\\Projects\\f2\\src\\test\\ae100020_5012.dat";
+            "d:\\Java\\Projects\\f2\\src\\test\\cus02.DAT";
 
     private static final String DEFAULT_INI_FILE =
             "d:\\Java\\Projects\\f2\\src\\test\\ALTPRNT5.INI";
@@ -38,12 +38,13 @@ public class F2FxPreviewManualSmokeApp extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        PreviewState state = preparePreview();
 
+        PreviewState state = preparePreview();
         F2FxPreviewPane previewPane = new F2FxPreviewPane(
-                state.document,
-                state.pageSetup
+            state.document,
+            state.pageSetup
         );
+
 
         previewPane.setDpi(doubleProperty("f2.preview.smoke.dpi", 144.0d));
         previewPane.setDebugOverlay(true);
@@ -57,6 +58,18 @@ public class F2FxPreviewManualSmokeApp extends Application {
     }
 
     private HBox newToolbar(F2FxPreviewPane previewPane) {
+
+        Button printButton = new Button("Print");
+
+        printButton.setOnAction(event -> {
+            try {
+                new F2PrintService().printDocument( previewPane.document );
+            }
+            catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
+
         Button previousButton = new Button("<");
         Button nextButton = new Button(">");
         CheckBox debugOverlayCheckBox = new CheckBox("Debug overlay");
@@ -83,7 +96,8 @@ public class F2FxPreviewManualSmokeApp extends Application {
                 previousButton,
                 pageLabel,
                 nextButton,
-                debugOverlayCheckBox
+                debugOverlayCheckBox,
+                printButton
         );
 
         toolbar.setStyle("-fx-padding: 8; -fx-alignment: center-left;");

@@ -50,7 +50,7 @@ public final class F2AwtLineRenderer {
      */
     public F2AwtLineMetrics paint( Graphics2D g, F2StyledLine line, double xPt, double baselineYPt )
     {
-        Checks.Require.object( g,"g");
+        Checks.Require.object( g, "g" );
 
         final F2AwtLineMetrics metrics = measure( g, line );
 
@@ -87,10 +87,8 @@ public final class F2AwtLineRenderer {
          * TextLayout берёт FontRenderContext из того же Graphics2D,
          * которым потом рисуем. Это важно для совпадения measure/paint.
          */
-        return new TextLayout(
-                run.text(),
-                font,
-                g.getFontRenderContext()
+        return new TextLayout (
+            run.text(), font, g.getFontRenderContext()
         );
     }
 

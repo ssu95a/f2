@@ -19,7 +19,7 @@ public final class F2FxPreviewPane extends BorderPane {
     private final ImageView imageView = new ImageView();
     private final ScrollPane scrollPane = new ScrollPane(imageView);
 
-    private F2StyledDocument document;
+    public F2StyledDocument document;
     private F2PrintPageSetup pageSetup;
     private int pageIndex;
     private double dpi = DEFAULT_DPI;

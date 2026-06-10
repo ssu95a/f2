@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.inversion.f2.prepared.F2StyledLine;
 import ru.inversion.f2.prepared.F2StyledPage;
+import ru.inversion.utils.Checks;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
@@ -36,16 +37,10 @@ public final class F2AwtPagePainter {
 
     private final F2AwtLineRenderer lineRenderer = new F2AwtLineRenderer();
 
+    /** */
     public void paint( Graphics2D g, F2StyledPage page, F2AwtPageRenderConfig config )
     {
-        if( g == null )
-            throw new IllegalArgumentException("g is null");
-
-        if( page == null )
-            throw new IllegalArgumentException("page is null");
-
-        if( config == null )
-            throw new IllegalArgumentException("config is null");
+        Checks.Require.objects( g, "g", page, "page", config, "config" );
 
         paintPaper( g, config );
 
@@ -219,31 +214,30 @@ public final class F2AwtPagePainter {
         return valuePt * PT_TO_MM;
     }
 
-    private void paintPageContent(
-            Graphics2D g,
-            F2StyledPage page
-    ) {
+    /** */
+    private void paintPageContent( Graphics2D g, F2StyledPage page )
+    {
         double y = 0.0d;
 
-        for (F2StyledLine line : page.lines()) {
+        for( F2StyledLine line : page.lines() )
+        {
             double x = line.leftIndentPt();
 
-            F2AwtLineMetrics metrics =
-                    lineRenderer.measure(g, line);
+            F2AwtLineMetrics metrics = lineRenderer.measure(g, line);
 
             double baselineY = y + metrics.ascentPt();
 
-            lineRenderer.paint(g, line, x, baselineY);
+            lineRenderer.paint( g, line, x, baselineY );
 
-            y += Math.max(line.lineStepPt(), metrics.heightPt());
+            y += Math.max( line.lineStepPt(), metrics.heightPt() );
         }
     }
 
     private void paintPaper( Graphics2D g, F2AwtPageRenderConfig config )
     {
-        g.setColor(Color.WHITE);
+        g.setColor( Color.WHITE );
         g.fill    ( new Rectangle2D.Double( 0, 0, config.paperWidthPt(), config.paperHeightPt() ) );
-        g.setColor(Color.BLACK);
+        g.setColor( Color.BLACK );
     }
 
     private void paintDebugOverlay( Graphics2D g, F2AwtPageRenderConfig config ) {
