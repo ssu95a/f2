@@ -2,6 +2,11 @@ package ru.inversion.f2.fx;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import ru.inversion.f2.F2Runtime;
 import ru.inversion.f2.ini.F2AltIniModelLoader;
@@ -43,9 +48,64 @@ public class F2FxPreviewManualSmokeApp extends Application {
         previewPane.setDpi(doubleProperty("f2.preview.smoke.dpi", 144.0d));
         previewPane.setDebugOverlay(true);
 
+        BorderPane root = new BorderPane(previewPane);
+        root.setTop(newToolbar(previewPane));
+
         stage.setTitle("F2 JavaFX Preview Smoke");
-        stage.setScene(new Scene(previewPane, 1000, 800));
+        stage.setScene(new Scene(root, 1000, 800));
         stage.show();
+    }
+
+    private HBox newToolbar(F2FxPreviewPane previewPane) {
+        Button previousButton = new Button("<");
+        Button nextButton = new Button(">");
+        CheckBox debugOverlayCheckBox = new CheckBox("Debug overlay");
+        Label pageLabel = new Label();
+
+        debugOverlayCheckBox.setSelected(true);
+
+        previousButton.setOnAction(event -> {
+            previewPane.previousPage();
+            updatePageControls(previewPane, previousButton, nextButton, pageLabel);
+        });
+
+        nextButton.setOnAction(event -> {
+            previewPane.nextPage();
+            updatePageControls(previewPane, previousButton, nextButton, pageLabel);
+        });
+
+        debugOverlayCheckBox.selectedProperty().addListener((observable, oldValue, newValue) ->
+                previewPane.setDebugOverlay(Boolean.TRUE.equals(newValue))
+        );
+
+        HBox toolbar = new HBox(
+                8.0d,
+                previousButton,
+                pageLabel,
+                nextButton,
+                debugOverlayCheckBox
+        );
+
+        toolbar.setStyle("-fx-padding: 8; -fx-alignment: center-left;");
+
+        updatePageControls(previewPane, previousButton, nextButton, pageLabel);
+
+        return toolbar;
+    }
+
+    private void updatePageControls(
+            F2FxPreviewPane previewPane,
+            Button previousButton,
+            Button nextButton,
+            Label pageLabel
+    ) {
+        pageLabel.setText(
+                "Page " + previewPane.pageNumber()
+                        + " / " + previewPane.pageCount()
+        );
+
+        previousButton.setDisable(previewPane.pageIndex() <= 0);
+        nextButton.setDisable(previewPane.pageIndex() + 1 >= previewPane.pageCount());
     }
 
     private PreviewState preparePreview() throws Exception {
