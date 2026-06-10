@@ -4,6 +4,7 @@ import org.junit.Assume;
 import org.junit.Test;
 import ru.inversion.f2.F2Runtime;
 import ru.inversion.f2.ini.F2AltIniModel;
+import ru.inversion.f2.ini.F2AltIniModelLoader;
 import ru.inversion.f2.prepared.F2StyledDocument;
 import ru.inversion.f2.print.F2PrintPageSetup;
 import ru.inversion.f2.print.F2PrintService;
@@ -51,8 +52,8 @@ public class F2AwtPreviewManualSmokeTest {
     @Test
     public void renderFirstRealDocumentPageWithDebugOverlay() throws Exception {
 
-        String inputFileName = System.getProperty("f2.preview.smoke.input");
-        String iniFileName = System.getProperty("f2.preview.smoke.ini");
+        String inputFileName = "d:\\Java\\Projects\\f2\\src\\test\\ae100020_5012.dat";
+        String iniFileName = "d:\\Java\\Projects\\f2\\src\\test\\ALTPRNT5.INI";
 
         Assume.assumeTrue(
                 "Set -Df2.preview.smoke.input=/path/to/prepared.txt",
@@ -72,7 +73,7 @@ public class F2AwtPreviewManualSmokeTest {
 
         Charset textCharset = charsetProperty(
                 "f2.preview.smoke.charset",
-                StandardCharsets.UTF_8
+                Charset.forName("windows-1251")
         );
 
         Charset iniCharset = charsetProperty(
@@ -81,13 +82,10 @@ public class F2AwtPreviewManualSmokeTest {
         );
 
         F2Runtime.init(
-                IniFileModel.load(
-                        iniPath,
-                        iniCharset
-                )
+            (new F2AltIniModelLoader()).load(iniPath,iniCharset)
         );
 
-        String printerName = System.getProperty("f2.preview.smoke.printer");
+        String printerName = "Microsoft Print to PDF"; //System.getProperty("f2.preview.smoke.printer");
 
         if (printerName != null && printerName.trim().length() > 0) {
             F2Runtime.get()
