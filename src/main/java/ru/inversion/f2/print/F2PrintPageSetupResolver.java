@@ -29,6 +29,9 @@ public final class F2PrintPageSetupResolver {
         PrintRequestAttributeSet attrs =
                 settings.attributesCopy();
 
+        MediaPrintableArea mediaPrintableArea =
+                (MediaPrintableArea) attrs.get(MediaPrintableArea.class);
+
         PrinterJob job =
                 PrinterJob.getPrinterJob();
 
@@ -39,6 +42,15 @@ public final class F2PrintPageSetupResolver {
 
         pageFormat =
                 job.validatePage(pageFormat);
+
+        PageFormatMediaAreaResult mediaAreaResult =
+                applyMediaPrintableAreaIfPresent(
+                        pageFormat,
+                        mediaPrintableArea
+                );
+
+        pageFormat =
+                mediaAreaResult.pageFormat;
 
         PageFormatFallbackResult fallbackResult =
                 applySafePageFormatFallbackIfNeeded(pageFormat);
@@ -52,9 +64,6 @@ public final class F2PrintPageSetupResolver {
         pageFormat =
                 normalizeResult.pageFormat;
 
-        MediaPrintableArea mediaPrintableArea =
-                (MediaPrintableArea) attrs.get(MediaPrintableArea.class);
-
         F2PrintPageSetup setup =
                 F2PrintPageSetup.builder()
                         .printService(printService)
@@ -67,15 +76,77 @@ public final class F2PrintPageSetupResolver {
                         .build();
 
         log.info(
-                "F2 resolved print page setup: printer={}, {}, matrix={}, safeFallbackApplied={}, verticalMarginsNormalized={}",
+                "F2 resolved print page setup: printer={}, {}, matrix={}, mediaPrintableAreaApplied={}, safeFallbackApplied={}, verticalMarginsNormalized={}",
                 printService.getName(),
                 setup.geometryToString(),
                 Boolean.valueOf(setup.matrixPrinter()),
+                Boolean.valueOf(mediaAreaResult.applied),
                 Boolean.valueOf(setup.safeFallbackApplied()),
                 Boolean.valueOf(setup.verticalMarginsNormalized())
         );
 
         return setup;
+    }
+
+    private PageFormatMediaAreaResult applyMediaPrintableAreaIfPresent(
+            PageFormat pf,
+            MediaPrintableArea mediaPrintableArea
+    ) {
+        if (pf == null || mediaPrintableArea == null)
+            return new PageFormatMediaAreaResult(pf, false);
+
+        Paper oldPaper =
+                pf.getPaper();
+
+        if (oldPaper == null)
+            return new PageFormatMediaAreaResult(pf, false);
+
+        double[] areaPt =
+                mediaPrintableAreaPt(mediaPrintableArea);
+
+        double x = areaPt[0];
+        double y = areaPt[1];
+        double w = areaPt[2];
+        double h = areaPt[3];
+
+        if (w <= 0.0d || h <= 0.0d)
+            return new PageFormatMediaAreaResult(pf, false);
+
+        Paper newPaper =
+                new Paper();
+
+        newPaper.setSize(
+                oldPaper.getWidth(),
+                oldPaper.getHeight()
+        );
+
+        newPaper.setImageableArea(
+                x,
+                y,
+                w,
+                h
+        );
+
+        PageFormat copy =
+                (PageFormat) pf.clone();
+
+        copy.setPaper(newPaper);
+
+        return new PageFormatMediaAreaResult(copy, true);
+    }
+
+    private double[] mediaPrintableAreaPt(
+            MediaPrintableArea mediaPrintableArea
+    ) {
+        float[] areaInches =
+                mediaPrintableArea.getPrintableArea(MediaPrintableArea.INCH);
+
+        return new double[] {
+                areaInches[0] * 72.0d,
+                areaInches[1] * 72.0d,
+                areaInches[2] * 72.0d,
+                areaInches[3] * 72.0d
+        };
     }
 
     private PageFormatFallbackResult applySafePageFormatFallbackIfNeeded(
@@ -200,6 +271,20 @@ public final class F2PrintPageSetupResolver {
         copy.setPaper(newPaper);
 
         return new PageFormatNormalizeResult(copy, true);
+    }
+
+    private static final class PageFormatMediaAreaResult {
+
+        private final PageFormat pageFormat;
+        private final boolean applied;
+
+        private PageFormatMediaAreaResult(
+                PageFormat pageFormat,
+                boolean applied
+        ) {
+            this.pageFormat = pageFormat;
+            this.applied = applied;
+        }
     }
 
     private static final class PageFormatFallbackResult {
