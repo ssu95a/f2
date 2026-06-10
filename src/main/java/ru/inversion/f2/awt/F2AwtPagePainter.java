@@ -100,62 +100,108 @@ public final class F2AwtPagePainter {
             F2StyledPage page,
             F2AwtPageRenderConfig config
     ) {
-        double scale = config.contentScale();
+        double configuredScale = config.contentScale();
 
         if (!config.shrinkToFit())
-            return scale;
+            return configuredScale;
 
         PageContentMetrics metrics =
                 measurePageContent(g, page);
 
-        double fitScale = 1.0d;
+        double widthFitScale = fitScale(
+                metrics.widthPt,
+                config.imageableWidthPt()
+        );
 
-        if (metrics.widthPt > 0.0d) {
-            fitScale = Math.min(
-                    fitScale,
-                    config.imageableWidthPt() / metrics.widthPt
-            );
-        }
+        double heightFitScale = fitScale(
+                metrics.heightPt,
+                config.imageableHeightPt()
+        );
 
-        if (metrics.heightPt > 0.0d) {
-            fitScale = Math.min(
-                    fitScale,
-                    config.imageableHeightPt() / metrics.heightPt
-            );
-        }
+        double fitScale = Math.min(
+                widthFitScale,
+                heightFitScale
+        );
 
-        if (fitScale > 1.0d)
-            fitScale = 1.0d;
+        double requestedScale = Math.min(
+                configuredScale,
+                fitScale
+        );
 
-        double requestedScale =
-                Math.min(scale, fitScale);
+        double resultScale = Math.max(
+                requestedScale,
+                DEFAULT_MIN_CONTENT_SCALE
+        );
 
-        double resultScale =
-                Math.max(requestedScale, DEFAULT_MIN_CONTENT_SCALE);
+        double overflowWidthPt = overflowPt(
+                metrics.widthPt,
+                config.imageableWidthPt()
+        );
+
+        double overflowHeightPt = overflowPt(
+                metrics.heightPt,
+                config.imageableHeightPt()
+        );
 
         if (requestedScale < DEFAULT_MIN_CONTENT_SCALE) {
             log.warn(
-                    "F2 page content does not fit min scale: content={}x{} pt, imageable={}x{} pt, requestedScale={}, minContentScale={}",
+                    "F2 page content scale diagnostics: content={}x{} pt, imageable={}x{} pt, overflow={}x{} pt, fitScaleWidth={}, fitScaleHeight={}, configuredScale={}, requestedScale={}, minContentScale={}, finalScale={}",
                     metrics.widthPt,
                     metrics.heightPt,
                     config.imageableWidthPt(),
                     config.imageableHeightPt(),
+                    overflowWidthPt,
+                    overflowHeightPt,
+                    widthFitScale,
+                    heightFitScale,
+                    configuredScale,
                     requestedScale,
-                    DEFAULT_MIN_CONTENT_SCALE
+                    DEFAULT_MIN_CONTENT_SCALE,
+                    resultScale
             );
         }
         else {
             log.debug(
-                    "F2 page content scale: content={}x{} pt, imageable={}x{} pt, scale={}",
+                    "F2 page content scale diagnostics: content={}x{} pt, imageable={}x{} pt, overflow={}x{} pt, fitScaleWidth={}, fitScaleHeight={}, configuredScale={}, requestedScale={}, finalScale={}",
                     metrics.widthPt,
                     metrics.heightPt,
                     config.imageableWidthPt(),
                     config.imageableHeightPt(),
+                    overflowWidthPt,
+                    overflowHeightPt,
+                    widthFitScale,
+                    heightFitScale,
+                    configuredScale,
+                    requestedScale,
                     resultScale
             );
         }
 
         return resultScale;
+    }
+
+    private static double fitScale(
+            double contentSizePt,
+            double imageableSizePt
+    ) {
+        if (contentSizePt <= 0.0d)
+            return 1.0d;
+
+        double scale = imageableSizePt / contentSizePt;
+
+        return scale > 1.0d
+                ? 1.0d
+                : scale;
+    }
+
+    private static double overflowPt(
+            double contentSizePt,
+            double imageableSizePt
+    ) {
+        return Math.max(
+                0.0d,
+                contentSizePt - imageableSizePt
+        );
     }
 
     private void paintPageContent(
