@@ -19,7 +19,10 @@ public final class F2AwtPreviewRenderer {
     {
         return render(
                 page,
-                F2AwtPageRenderConfig.fromPrintPageSetup(pageSetup)
+                F2AwtPageRenderConfig.fromPrintPageSetup(
+                                pageSetup,
+                                page
+                        )
                         .withShrinkToFit(true)
         );
     }
@@ -35,6 +38,7 @@ public final class F2AwtPreviewRenderer {
                 page,
                 F2AwtPageRenderConfig.fromPrintPageSetup(
                         pageSetup,
+                        page,
                         dpi,
                         debugOverlay
                 ).withShrinkToFit(true)
