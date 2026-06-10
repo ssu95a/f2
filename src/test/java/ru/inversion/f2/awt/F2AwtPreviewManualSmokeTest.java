@@ -3,7 +3,6 @@ package ru.inversion.f2.awt;
 import org.junit.Assume;
 import org.junit.Test;
 import ru.inversion.f2.F2Runtime;
-import ru.inversion.f2.ini.F2AltIniModel;
 import ru.inversion.f2.ini.F2AltIniModelLoader;
 import ru.inversion.f2.prepared.F2StyledDocument;
 import ru.inversion.f2.print.F2PrintPageSetup;
@@ -13,55 +12,88 @@ import javax.imageio.ImageIO;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.standard.MediaPrintableArea;
 import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
-import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Locale;
-import java.util.Map;
 
 import static org.junit.Assert.assertFalse;
 
 /**
  * Ручной smoke для визуальной сверки preview geometry.
  *
- * Обычный mvn test этот тест пропускает. Для запуска передайте:
- *
- * mvn test -Dtest=F2AwtPreviewManualSmokeTest \
- *   -Df2.preview.smoke.input=/path/to/prepared.txt \
- *   -Df2.preview.smoke.ini=/path/to/ALTPRNT5.INI \
- *   -Df2.preview.smoke.output=target/f2-preview-debug-page-1.png
+ * Запускается из IDEA без -D: ниже есть DEFAULT_* значения.
+ * Через -D можно переопределить любой параметр.
  *
  * Опционально:
+ *   -Df2.preview.smoke.input=/path/to/prepared.txt
+ *   -Df2.preview.smoke.ini=/path/to/ALTPRNT5.INI
+ *   -Df2.preview.smoke.output=target/f2-preview-debug-page-1.png
  *   -Df2.preview.smoke.printer="Microsoft Print to PDF"
  *   -Df2.preview.smoke.dpi=144
  *   -Df2.preview.smoke.charset=windows-1251
  *   -Df2.preview.smoke.ini.charset=windows-1251
  *   -Df2.preview.smoke.media.printable.mm=5,5,200,287
+ *   -Df2.preview.smoke.override.printable=false
  *   -Df2.preview.smoke.margin.mm=5
  *   -Df2.preview.smoke.paper.width.mm=210
  *   -Df2.preview.smoke.paper.height.mm=297
  */
 public class F2AwtPreviewManualSmokeTest {
 
+    private static final String DEFAULT_INPUT_FILE =
+            "d:\\Java\\Projects\\f2\\src\\test\\ae100020_5012.dat";
+
+    private static final String DEFAULT_INI_FILE =
+            "d:\\Java\\Projects\\f2\\src\\test\\ALTPRNT5.INI";
+
+    private static final String DEFAULT_OUTPUT_FILE =
+            "target/f2-preview-debug-page-1.png";
+
+    private static final String DEFAULT_PRINTER_NAME =
+            "Microsoft Print to PDF";
+
+    private static final String DEFAULT_TEXT_CHARSET =
+            "windows-1251";
+
+    private static final String DEFAULT_INI_CHARSET =
+            "windows-1251";
+
+    private static final String DEFAULT_DPI =
+            "144";
+
+    private static final String DEFAULT_OVERRIDE_PRINTABLE =
+            "true";
+
+    private static final String DEFAULT_MARGIN_MM =
+            "5";
+
+    private static final String DEFAULT_PAPER_WIDTH_MM =
+            "210";
+
+    private static final String DEFAULT_PAPER_HEIGHT_MM =
+            "297";
+
     @Test
     public void renderFirstRealDocumentPageWithDebugOverlay() throws Exception {
 
-        String inputFileName = "d:\\Java\\Projects\\f2\\src\\test\\ae100020_5012.dat";
-        String iniFileName = "d:\\Java\\Projects\\f2\\src\\test\\ALTPRNT5.INI";
+        String inputFileName = stringProperty(
+                "f2.preview.smoke.input",
+                DEFAULT_INPUT_FILE
+        );
+
+        String iniFileName = stringProperty(
+                "f2.preview.smoke.ini",
+                DEFAULT_INI_FILE
+        );
 
         Assume.assumeTrue(
-                "Set -Df2.preview.smoke.input=/path/to/prepared.txt",
+                "Prepared text file does not exist: " + inputFileName,
                 inputFileName != null && inputFileName.trim().length() > 0
         );
 
         Assume.assumeTrue(
-                "Set -Df2.preview.smoke.ini=/path/to/ALTPRNT5.INI",
+                "INI file does not exist: " + iniFileName,
                 iniFileName != null && iniFileName.trim().length() > 0
         );
 
@@ -73,19 +105,25 @@ public class F2AwtPreviewManualSmokeTest {
 
         Charset textCharset = charsetProperty(
                 "f2.preview.smoke.charset",
-                Charset.forName("windows-1251")
+                DEFAULT_TEXT_CHARSET
         );
 
         Charset iniCharset = charsetProperty(
                 "f2.preview.smoke.ini.charset",
-                Charset.forName("windows-1251")
+                DEFAULT_INI_CHARSET
         );
 
         F2Runtime.init(
-            (new F2AltIniModelLoader()).load(iniPath,iniCharset)
+                new F2AltIniModelLoader().load(
+                        iniPath,
+                        iniCharset
+                )
         );
 
-        String printerName = "Microsoft Print to PDF"; //System.getProperty("f2.preview.smoke.printer");
+        String printerName = stringProperty(
+                "f2.preview.smoke.printer",
+                DEFAULT_PRINTER_NAME
+        );
 
         if (printerName != null && printerName.trim().length() > 0) {
             F2Runtime.get()
@@ -117,9 +155,9 @@ public class F2AwtPreviewManualSmokeTest {
                         .currentPrintPageSetup();
 
         double dpi = Double.parseDouble(
-                System.getProperty(
+                stringProperty(
                         "f2.preview.smoke.dpi",
-                        "144"
+                        DEFAULT_DPI
                 )
         );
 
@@ -132,9 +170,9 @@ public class F2AwtPreviewManualSmokeTest {
                 );
 
         Path outputPath = Paths.get(
-                System.getProperty(
+                stringProperty(
                         "f2.preview.smoke.output",
-                        "target/f2-preview-debug-page-1.png"
+                        DEFAULT_OUTPUT_FILE
                 )
         );
 
@@ -155,14 +193,19 @@ public class F2AwtPreviewManualSmokeTest {
 
     private static void applyPrintableAreaOverrideIfRequested() {
 
+        if (!booleanProperty(
+                "f2.preview.smoke.override.printable",
+                DEFAULT_OVERRIDE_PRINTABLE
+        )) {
+            System.out.println("F2 preview smoke mediaPrintableArea override: disabled");
+            return;
+        }
+
         MediaPrintableArea mediaPrintableArea =
                 mediaPrintableAreaFromProperty();
 
         if (mediaPrintableArea == null)
-            mediaPrintableArea = mediaPrintableAreaFromMarginProperty();
-
-        if (mediaPrintableArea == null)
-            return;
+            mediaPrintableArea = mediaPrintableAreaFromMarginDefaults();
 
         HashPrintRequestAttributeSet attributes =
                 new HashPrintRequestAttributeSet();
@@ -191,35 +234,38 @@ public class F2AwtPreviewManualSmokeTest {
             );
 
         return new MediaPrintableArea(
-                (float) parsePositiveDouble(parts[0], "mediaPrintableArea.x"),
-                (float) parsePositiveDouble(parts[1], "mediaPrintableArea.y"),
+                (float) parseNonNegativeDouble(parts[0], "mediaPrintableArea.x"),
+                (float) parseNonNegativeDouble(parts[1], "mediaPrintableArea.y"),
                 (float) parsePositiveDouble(parts[2], "mediaPrintableArea.width"),
                 (float) parsePositiveDouble(parts[3], "mediaPrintableArea.height"),
                 MediaPrintableArea.MM
         );
     }
 
-    private static MediaPrintableArea mediaPrintableAreaFromMarginProperty() {
+    private static MediaPrintableArea mediaPrintableAreaFromMarginDefaults() {
 
-        String value = System.getProperty("f2.preview.smoke.margin.mm");
-
-        if (value == null || value.trim().length() == 0)
-            return null;
-
-        double marginMm = parseNonNegativeDouble(value, "f2.preview.smoke.margin.mm");
-
-        double paperWidthMm = Double.parseDouble(
-                System.getProperty(
-                        "f2.preview.smoke.paper.width.mm",
-                        "210"
-                )
+        double marginMm = parseNonNegativeDouble(
+                stringProperty(
+                        "f2.preview.smoke.margin.mm",
+                        DEFAULT_MARGIN_MM
+                ),
+                "f2.preview.smoke.margin.mm"
         );
 
-        double paperHeightMm = Double.parseDouble(
-                System.getProperty(
+        double paperWidthMm = parsePositiveDouble(
+                stringProperty(
+                        "f2.preview.smoke.paper.width.mm",
+                        DEFAULT_PAPER_WIDTH_MM
+                ),
+                "f2.preview.smoke.paper.width.mm"
+        );
+
+        double paperHeightMm = parsePositiveDouble(
+                stringProperty(
                         "f2.preview.smoke.paper.height.mm",
-                        "297"
-                )
+                        DEFAULT_PAPER_HEIGHT_MM
+                ),
+                "f2.preview.smoke.paper.height.mm"
         );
 
         double printableWidthMm = paperWidthMm - marginMm * 2.0d;
@@ -244,6 +290,30 @@ public class F2AwtPreviewManualSmokeTest {
                 (float) printableHeightMm,
                 MediaPrintableArea.MM
         );
+    }
+
+    private static boolean booleanProperty(
+            String name,
+            String defaultValue
+    ) {
+        return Boolean.parseBoolean(
+                stringProperty(
+                        name,
+                        defaultValue
+                )
+        );
+    }
+
+    private static String stringProperty(
+            String name,
+            String defaultValue
+    ) {
+        String value = System.getProperty(name);
+
+        if (value == null || value.trim().length() == 0)
+            return defaultValue;
+
+        return value.trim();
     }
 
     private static double parsePositiveDouble(
@@ -275,201 +345,13 @@ public class F2AwtPreviewManualSmokeTest {
 
     private static Charset charsetProperty(
             String name,
-            Charset defaultValue
+            String defaultValue
     ) {
-        String value = System.getProperty(name);
-
-        if (value == null || value.trim().length() == 0)
-            return defaultValue;
-
-        return Charset.forName(value.trim());
-    }
-
-    private static final class IniFileModel implements F2AltIniModel {
-
-        private final Map<String, String> commands;
-        private final Map<String, String> codeText;
-        private final Map<String, String> codeGraphics;
-        private final Map<String, String> driverRef;
-
-        private IniFileModel(
-                Map<String, String> commands,
-                Map<String, String> codeText,
-                Map<String, String> codeGraphics,
-                Map<String, String> driverRef
-        ) {
-            this.commands = Collections.unmodifiableMap(new LinkedHashMap<String, String>(commands));
-            this.codeText = Collections.unmodifiableMap(new LinkedHashMap<String, String>(codeText));
-            this.codeGraphics = Collections.unmodifiableMap(new LinkedHashMap<String, String>(codeGraphics));
-            this.driverRef = Collections.unmodifiableMap(new LinkedHashMap<String, String>(driverRef));
-        }
-
-        private static IniFileModel load(
-                Path path,
-                Charset charset
-        ) throws IOException {
-
-            Map<String, String> commands = new LinkedHashMap<String, String>();
-            Map<String, String> codeText = new LinkedHashMap<String, String>();
-            Map<String, String> codeGraphics = new LinkedHashMap<String, String>();
-            Map<String, String> driverRef = new LinkedHashMap<String, String>();
-
-            Map<String, String> current = null;
-
-            BufferedReader reader = Files.newBufferedReader(path, charset);
-
-            try {
-                String line;
-
-                while ((line = reader.readLine()) != null) {
-                    line = stripBom(line).trim();
-
-                    if (line.length() == 0)
-                        continue;
-
-                    if (line.startsWith(";") || line.startsWith("#"))
-                        continue;
-
-                    if (line.startsWith("[") && line.endsWith("]")) {
-                        String section = normalizeSectionName(
-                                line.substring(1, line.length() - 1)
-                        );
-
-                        if ("COMMANDS".equals(section))
-                            current = commands;
-                        else if ("CODETEXT".equals(section))
-                            current = codeText;
-                        else if ("CODEGRAPHICS".equals(section))
-                            current = codeGraphics;
-                        else if ("DRIVERREF".equals(section))
-                            current = driverRef;
-                        else
-                            current = null;
-
-                        continue;
-                    }
-
-                    if (current == null)
-                        continue;
-
-                    int eq = line.indexOf('=');
-
-                    if (eq <= 0)
-                        continue;
-
-                    String key = line.substring(0, eq).trim();
-                    String value = line.substring(eq + 1).trim();
-
-                    if (key.length() == 0)
-                        continue;
-
-                    current.put(key, value);
-                }
-            }
-            finally {
-                reader.close();
-            }
-
-            return new IniFileModel(
-                    commands,
-                    codeText,
-                    codeGraphics,
-                    driverRef
-            );
-        }
-
-        @Override
-        public Map<String, String> commands() {
-            return commands;
-        }
-
-        @Override
-        public Map<String, String> codeText() {
-            return codeText;
-        }
-
-        @Override
-        public Map<String, String> codeGraphics() {
-            return codeGraphics;
-        }
-
-        @Override
-        public Map<String, String> driverRef() {
-            return driverRef;
-        }
-
-        @Override
-        public String cleanCommandName(String name) {
-
-            if (name == null)
-                return null;
-
-            String result = name.trim();
-
-            while (result.startsWith("!"))
-                result = result.substring(1).trim();
-
-            return result;
-        }
-
-        @Override
-        public String commandDescription(String name) {
-            return valueByCleanName(commands, name);
-        }
-
-        @Override
-        public String codeText(String name) {
-            return valueByCleanName(codeText, name);
-        }
-
-        @Override
-        public String codeGraphics(String name) {
-            return valueByCleanName(codeGraphics, name);
-        }
-
-        @Override
-        public String driverRef(String name) {
-            return valueByCleanName(driverRef, name);
-        }
-
-        @Override
-        public boolean isMatrixPrinter(String printerName) {
-            return DRIVER_REF_CODE_TEXT.equalsIgnoreCase(driverRef(printerName));
-        }
-
-        @Override
-        public boolean isGraphicsPrinter(String printerName) {
-            return DRIVER_REF_CODE_GRAPHICS.equalsIgnoreCase(driverRef(printerName));
-        }
-
-        private String valueByCleanName(
-                Map<String, String> source,
-                String name
-        ) {
-            if (name == null)
-                return null;
-
-            String cleanName = cleanCommandName(name);
-
-            for (Map.Entry<String, String> e : source.entrySet()) {
-                if (cleanCommandName(e.getKey()).equalsIgnoreCase(cleanName))
-                    return e.getValue();
-            }
-
-            return null;
-        }
-
-        private static String normalizeSectionName(String value) {
-            return value == null
-                    ? ""
-                    : value.trim().replace("_", "").replace("-", "").toUpperCase(Locale.ENGLISH);
-        }
-
-        private static String stripBom(String value) {
-            if (value != null && value.length() > 0 && value.charAt(0) == '\uFEFF')
-                return value.substring(1);
-
-            return value;
-        }
+        return Charset.forName(
+                stringProperty(
+                        name,
+                        defaultValue
+                )
+        );
     }
 }
