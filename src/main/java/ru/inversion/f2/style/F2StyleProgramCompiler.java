@@ -7,6 +7,7 @@ import ru.inversion.f2.style.op.*;
 import ru.inversion.utils.Checks;
 import ru.inversion.utils.S;
 
+import javax.print.attribute.standard.OrientationRequested;
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,6 +70,11 @@ public final class F2StyleProgramCompiler {
                 return F2PageEnd.INSTANCE;
             case LF:
                 return F2LineFeed.INSTANCE;
+            case ORIENTATION:
+                return new F2SetOrientation(pv.valueAs(OrientationRequested.class, OrientationRequested.PORTRAIT));
+            case SET_COPIES:
+                log.debug("Ignoring F2 document setup property in style program: command={}, property={}", def.name(), property);
+                return null;
             default:
                 log.warn("Unsupported F2 style property: command={}, property={}", def.name(), property);
                 return null;
