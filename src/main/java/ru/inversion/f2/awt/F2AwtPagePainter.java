@@ -60,18 +60,8 @@ public final class F2AwtPagePainter {
         AffineTransform oldTransform = g.getTransform();
 
         try {
-            if (page.isLandscape()) {
-                g.translate(
-                        config.imageableXPt() + config.imageableWidthPt(),
-                        config.imageableYPt()
-                );
-                g.rotate(Math.PI / 2.0d);
-                g.scale(scale, scale);
-            }
-            else {
-                g.translate(config.imageableXPt(), config.imageableYPt());
-                g.scale(scale, scale);
-            }
+            g.translate(config.imageableXPt(), config.imageableYPt());
+            g.scale(scale, scale);
 
             paintPageContent(g, page);
         }
@@ -115,24 +105,11 @@ public final class F2AwtPagePainter {
         PageContentMetrics metrics =
                 measurePageContent(g, page);
 
-        double widthFitScale;
-        double heightFitScale;
-
-        if (page.isLandscape()) {
-            widthFitScale = fitScale(metrics.widthPt, config.imageableHeightPt());
-            heightFitScale = fitScale(metrics.heightPt, config.imageableWidthPt());
-        }
-        else {
-            widthFitScale = fitScale(metrics.widthPt, config.imageableWidthPt());
-            heightFitScale = fitScale(metrics.heightPt, config.imageableHeightPt());
-        }
-
+        double widthFitScale = fitScale(metrics.widthPt, config.imageableWidthPt());
+        double heightFitScale = fitScale(metrics.heightPt, config.imageableHeightPt());
         double fitScale = Math.min(widthFitScale, heightFitScale);
         double requestedScale = Math.min(configuredScale, fitScale);
-
-        double resultScale = page.isLandscape()
-                ? requestedScale
-                : Math.max(requestedScale, DEFAULT_MIN_CONTENT_SCALE);
+        double resultScale = Math.max(requestedScale, DEFAULT_MIN_CONTENT_SCALE);
 
         double overflowWidthPt = overflowPt(metrics.widthPt, config.imageableWidthPt());
         double overflowHeightPt = overflowPt(metrics.heightPt, config.imageableHeightPt());
