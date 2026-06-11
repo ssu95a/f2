@@ -105,9 +105,11 @@ public final class F2AwtPagePainter {
         PageContentMetrics metrics =
                 measurePageContent(g, page);
 
+        double pageContractScale = resolvePageContractScale(config);
         double widthFitScale = fitScale(metrics.widthPt, config.imageableWidthPt());
         double heightFitScale = fitScale(metrics.heightPt, config.imageableHeightPt());
-        double fitScale = Math.min(widthFitScale, heightFitScale);
+        double metricsFitScale = Math.min(widthFitScale, heightFitScale);
+        double fitScale = Math.min(pageContractScale, metricsFitScale);
         double requestedScale = Math.min(configuredScale, fitScale);
         double resultScale = Math.max(requestedScale, DEFAULT_MIN_CONTENT_SCALE);
 
@@ -124,6 +126,7 @@ public final class F2AwtPagePainter {
                 config,
                 overflowWidthPt,
                 overflowHeightPt,
+                pageContractScale,
                 widthFitScale,
                 heightFitScale,
                 configuredScale,
@@ -134,6 +137,12 @@ public final class F2AwtPagePainter {
         return resultScale;
     }
 
+    private double resolvePageContractScale(F2AwtPageRenderConfig config) {
+        double widthScale = fitScale(config.paperWidthPt(), config.imageableWidthPt());
+        double heightScale = fitScale(config.paperHeightPt(), config.imageableHeightPt());
+        return Math.min(widthScale, heightScale);
+    }
+
     private void logOnePageFitDiagnostics(
             boolean onePageFit,
             boolean shrinkRequired,
@@ -141,6 +150,7 @@ public final class F2AwtPagePainter {
             F2AwtPageRenderConfig config,
             double overflowWidthPt,
             double overflowHeightPt,
+            double pageContractScale,
             double widthFitScale,
             double heightFitScale,
             double configuredScale,
@@ -149,7 +159,7 @@ public final class F2AwtPagePainter {
     ) {
         if (resultScale < DEFAULT_WARN_CONTENT_SCALE || !onePageFit) {
             log.warn(
-                    "F2 page one-page fit diagnostics: onePageFit={}, shrinkRequired={}, content={}x{} pt, imageable={}x{} pt, overflow={}x{} pt, overflowMm={}x{}, fitScaleWidth={}, fitScaleHeight={}, configuredScale={}, requestedScale={}, finalScale={}, warnContentScale={}, minContentScale={}",
+                    "F2 page one-page fit diagnostics: onePageFit={}, shrinkRequired={}, content={}x{} pt, imageable={}x{} pt, overflow={}x{} pt, overflowMm={}x{}, pageContractScale={}, fitScaleWidth={}, fitScaleHeight={}, configuredScale={}, requestedScale={}, finalScale={}, warnContentScale={}, minContentScale={}",
                     onePageFit,
                     shrinkRequired,
                     metrics.widthPt,
@@ -160,6 +170,7 @@ public final class F2AwtPagePainter {
                     overflowHeightPt,
                     ptToMm(overflowWidthPt),
                     ptToMm(overflowHeightPt),
+                    pageContractScale,
                     widthFitScale,
                     heightFitScale,
                     configuredScale,
@@ -171,7 +182,7 @@ public final class F2AwtPagePainter {
         }
         else {
             log.debug(
-                    "F2 page one-page fit diagnostics: onePageFit={}, shrinkRequired={}, content={}x{} pt, imageable={}x{} pt, overflow={}x{} pt, overflowMm={}x{}, fitScaleWidth={}, fitScaleHeight={}, configuredScale={}, requestedScale={}, finalScale={}",
+                    "F2 page one-page fit diagnostics: onePageFit={}, shrinkRequired={}, content={}x{} pt, imageable={}x{} pt, overflow={}x{} pt, overflowMm={}x{}, pageContractScale={}, fitScaleWidth={}, fitScaleHeight={}, configuredScale={}, requestedScale={}, finalScale={}",
                     onePageFit,
                     shrinkRequired,
                     metrics.widthPt,
@@ -182,6 +193,7 @@ public final class F2AwtPagePainter {
                     overflowHeightPt,
                     ptToMm(overflowWidthPt),
                     ptToMm(overflowHeightPt),
+                    pageContractScale,
                     widthFitScale,
                     heightFitScale,
                     configuredScale,
