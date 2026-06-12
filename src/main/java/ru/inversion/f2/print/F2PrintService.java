@@ -8,7 +8,6 @@ import ru.inversion.f2.command.F2CommandRegistry;
 import ru.inversion.f2.prepared.*;
 import ru.inversion.utils.Checks;
 
-
 import java.awt.print.PrinterJob;
 import java.lang.invoke.MethodHandles;
 
@@ -78,24 +77,10 @@ public final class F2PrintService {
             setup.attributesCopy()
         );
 
-        log.warn("F2 PRINT GRAPHICS PATH: pageable={}, pages={}",
-                F2AwtPageable.class.getName(),
-                document.pageCount());
-
-        log.warn("F2 document pages={}", document.pageCount());
-
-        for (int i = 0; i < document.pageCount(); i++) {
-            log.warn(
-                    "F2 page {}: landscape={}, lines={}",
-                    i,
-                    document.pages().get(i).isLandscape(),
-                    document.pages().get(i).lines().size()
-            );
-        }
-
         return new F2PrintResult(
                 setup.printService().getName(),
                 printerMan.currentDriverRef(),
                 document.pageCount()
         );
-    }}
+    }
+}
