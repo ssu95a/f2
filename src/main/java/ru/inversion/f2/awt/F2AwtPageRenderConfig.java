@@ -4,7 +4,6 @@ import ru.inversion.f2.prepared.F2StyledPage;
 import ru.inversion.f2.print.F2PrintPageSetup;
 
 import java.awt.print.PageFormat;
-import java.awt.print.Paper;
 
 public final class F2AwtPageRenderConfig {
 
@@ -131,29 +130,6 @@ public final class F2AwtPageRenderConfig {
         );
     }
 
-    public static F2AwtPageRenderConfig a4Portrait() {
-        /*
-         * A4: 210 x 297 mm.
-         * 1 inch = 25.4 mm.
-         * 1 pt = 1/72 inch.
-         */
-        double widthPt = mmToPt(210.0d);
-        double heightPt = mmToPt(297.0d);
-
-        double marginPt = mmToPt(5.0d);
-
-        return new F2AwtPageRenderConfig(
-                widthPt,
-                heightPt,
-                marginPt,
-                marginPt,
-                widthPt - marginPt * 2.0d,
-                heightPt - marginPt * 2.0d,
-                DEFAULT_DPI,
-                false
-        );
-    }
-
     public static F2AwtPageRenderConfig fromPrintPageSetup(
             F2PrintPageSetup setup
     ) {
@@ -249,56 +225,6 @@ public final class F2AwtPageRenderConfig {
         );
     }
 
-    public static F2AwtPageRenderConfig fromPaper(
-            Paper paper,
-            double dpi,
-            boolean debugOverlay
-    ) {
-        if (paper == null)
-            throw new IllegalArgumentException("paper is null");
-
-        return new F2AwtPageRenderConfig(
-                paper.getWidth(),
-                paper.getHeight(),
-                paper.getImageableX(),
-                paper.getImageableY(),
-                paper.getImageableWidth(),
-                paper.getImageableHeight(),
-                dpi,
-                debugOverlay
-        );
-    }
-
-    public F2AwtPageRenderConfig withDpi(double value) {
-        return new F2AwtPageRenderConfig(
-                paperWidthPt,
-                paperHeightPt,
-                imageableXPt,
-                imageableYPt,
-                imageableWidthPt,
-                imageableHeightPt,
-                value,
-                debugOverlay,
-                contentScale,
-                shrinkToFit
-        );
-    }
-
-    public F2AwtPageRenderConfig withDebugOverlay(boolean value) {
-        return new F2AwtPageRenderConfig(
-                paperWidthPt,
-                paperHeightPt,
-                imageableXPt,
-                imageableYPt,
-                imageableWidthPt,
-                imageableHeightPt,
-                dpi,
-                value,
-                contentScale,
-                shrinkToFit
-        );
-    }
-
     public double paperWidthPt() {
         return paperWidthPt;
     }
@@ -347,33 +273,8 @@ public final class F2AwtPageRenderConfig {
         return (int) Math.round(pt * scale());
     }
 
-    public double pxToPt(int px) {
-        return ((double) px) / scale();
-    }
-
-    public PageFormat toPageFormat() {
-        Paper paper = new Paper();
-
-        paper.setSize(paperWidthPt, paperHeightPt);
-        paper.setImageableArea(
-                imageableXPt,
-                imageableYPt,
-                imageableWidthPt,
-                imageableHeightPt
-        );
-
-        PageFormat pf = new PageFormat();
-        pf.setPaper(paper);
-
-        return pf;
-    }
-
     private int ceilPtToPx(double pt) {
         return (int) Math.ceil(pt * scale());
-    }
-
-    private static double mmToPt(double mm) {
-        return mm * 72.0d / 25.4d;
     }
 
     @Override
@@ -387,6 +288,8 @@ public final class F2AwtPageRenderConfig {
                 + ", imageableHeightPt=" + imageableHeightPt
                 + ", dpi=" + dpi
                 + ", debugOverlay=" + debugOverlay
+                + ", contentScale=" + contentScale
+                + ", shrinkToFit=" + shrinkToFit
                 + '}';
     }
 }
