@@ -107,14 +107,14 @@ public final class F2CommandCall {
     /** */
     public static F2CommandCall parse( String raw )
     {
-        if( S.isNullOrEmpty(raw) )
-            throw F2Errors.of(F2Errors.ErrorCode.COMMAND_CALL_INVALID).param("reason", "Command call is empty").param( "raw", raw );
+        String s;
 
-        String s = raw.trim();
+        if( S.isNullOrEmpty(raw) || (s = raw.trim()).isEmpty() )
+            throw F2Errors.of(F2Errors.ErrorCode.COMMAND_CALL_INVALID).param( "reason", "Command call is empty").param( "raw", raw );
 
-        if( s.startsWith("`") || s.endsWith("`") )
+        if( s.charAt(0) == '`' || S.lastChar(s) == '`' )
         {
-            if( !(s.startsWith("`") && s.endsWith("`") && s.length() >= 2) )
+            if( !( s.charAt(0) == '`' && S.lastChar(s) == '`' && s.length() >= 2 ) )
             {
                 throw F2Errors.of(F2Errors.ErrorCode.COMMAND_CALL_INVALID)
                         .param("reason", "Invalid command quote")
@@ -141,7 +141,7 @@ public final class F2CommandCall {
                     .param("raw", raw);
 
 
-        final List<String> args = new ArrayList<String>();
+        final List<String> args = new ArrayList<String>(parts.length);
 
         for( int i = 1; i < parts.length; i++) {
 
@@ -156,7 +156,7 @@ public final class F2CommandCall {
             args.add(arg);
         }
 
-        return new F2CommandCall(name, args, raw);
+        return new F2CommandCall( name, args, raw );
     }
 
 }

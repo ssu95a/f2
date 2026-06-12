@@ -10,12 +10,10 @@ import ru.inversion.utils.S;
 import java.util.ArrayList;
 import java.util.List;
 
+/** Преобразователь промежуточного документа в стилизованный */
 public final class F2PreparedTextInterpreter {
 
-    public F2StyledDocument interpret (
-            List<F2PreparedToken> tokens,
-            F2CommandRegistry registry
-    )
+    public F2StyledDocument interpret ( List<F2PreparedToken> tokens, F2CommandRegistry registry )
     {
         Checks.Require.object( registry, "registry" );
 
@@ -25,7 +23,7 @@ public final class F2PreparedTextInterpreter {
         {
             for( F2PreparedToken token : tokens ) {
 
-                if (token == null)
+                if( token == null )
                     continue;
 
                 processToken( token, registry, ctx );
@@ -37,25 +35,18 @@ public final class F2PreparedTextInterpreter {
         return new F2StyledDocument( ctx.pages );
     }
 
-    private void processToken(
-            F2PreparedToken token,
-            F2CommandRegistry registry,
-            Context ctx
-    )
+    private void processToken( F2PreparedToken token, F2CommandRegistry registry, Context ctx )
     {
-        switch (token.type()) {
+        switch( token.type() ) {
             case TEXT:
-                processText(token, ctx);
+                processText( token, ctx );
                 break;
-
             case COMMAND:
-                processCommand(token, registry, ctx);
+                processCommand( token, registry, ctx );
                 break;
-
             case NEW_LINE:
                 ctx.finishCurrentLine();
                 break;
-
             default:
                 throw new IllegalStateException( "Unsupported token type: " + token.type() );
         }
@@ -69,7 +60,7 @@ public final class F2PreparedTextInterpreter {
         if(S.isNullOrEmpty(text))
             return;
 
-        ctx.currentRuns.add( new F2StyledTextChunk( text, ctx.state.style() ));
+        ctx.chunks.add( new F2StyledTextChunk( text, ctx.state.style() ) );
     }
 
     /** */
@@ -100,41 +91,30 @@ public final class F2PreparedTextInterpreter {
         ctx.control.clear();
     }
 
+    /** */
     private static final class Context {
 
-        private final List<F2StyledPage> pages =
-                new ArrayList<F2StyledPage>();
+        private final List<F2StyledPage> pages  = new ArrayList<F2StyledPage>();
+        private List<F2StyledLine>       lines  = new ArrayList<F2StyledLine>();
+        private List<F2StyledTextChunk>  chunks = new ArrayList<>();
 
-        private List<F2StyledLine> currentPageLines =
-                new ArrayList<F2StyledLine>();
+        private F2RenderState            state  = F2RenderState.initial();
 
-        private List<F2StyledTextChunk> currentRuns =
-                new ArrayList<F2StyledTextChunk>();
+        private final F2ControlState    control = new F2ControlState();
 
-        private F2RenderState state =
-                F2RenderState.initial();
-
-        private final F2ControlState control =
-                new F2ControlState();
-
+        /** */
         private void finishCurrentLine() {
-            currentPageLines.add(new F2StyledLine(
-                    currentRuns,
-                    state.lineStepPt(),
-                    state.leftIndentPt()
-            ));
-
-            currentRuns = new ArrayList<F2StyledTextChunk>();
+            lines.add( new F2StyledLine( chunks, state.lineStepPt(), state.leftIndentPt() ));
+            chunks = new ArrayList<>();
         }
 
+        /** */
         private void finishCurrentPage() {
-            pages.add(new F2StyledPage(
-                    currentPageLines,
-                    state.orientation()
-            ));
-            currentPageLines = new ArrayList<F2StyledLine>();
+            pages.add(new F2StyledPage( lines, state.orientation() ));
+            lines = new ArrayList<>();
         }
 
+        /** */
         private void finishDocument() {
             finishCurrentLine();
             finishCurrentPage();

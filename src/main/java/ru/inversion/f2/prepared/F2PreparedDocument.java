@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/** Промежуточный документ с типом + набор разобранных выводимых токенов текста */
 public final class F2PreparedDocument {
 
     private final List<F2PreparedToken> tokens;
@@ -15,17 +16,15 @@ public final class F2PreparedDocument {
     {
         this.tokens = tokens == null || tokens.isEmpty()
                 ? Collections.<F2PreparedToken>emptyList()
-                : Collections.unmodifiableList(
-                new ArrayList<F2PreparedToken>(tokens)
-        );
+                : Collections.unmodifiableList( new ArrayList<>(tokens) );
 
-        this.contentMode = Checks.Require.object(contentMode, "contentMode");
+        this.contentMode = Checks.Require.object( contentMode, "contentMode");
     }
-    /* **/
+    /** */
     public List<F2PreparedToken> tokens() {
         return tokens;
     }
-
+    /** */
     public F2PreparedContentMode contentMode() {
         return contentMode;
     }

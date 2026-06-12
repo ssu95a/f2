@@ -45,7 +45,7 @@ public final class F2AwtLineRenderer {
     }
 
     /**
-     * Рисует строку по заданному baseline.
+     * Рисует строку по-заданному baseline.
      * Все runs строки рисуются на одной baselineY.
      */
     public F2AwtLineMetrics paint( Graphics2D g, F2StyledLine line, double xPt, double baselineYPt )
@@ -93,23 +93,21 @@ public final class F2AwtLineRenderer {
     }
 
     /** */
-    private Font toAwtFont(F2Style style)
+    private Font toAwtFont( F2Style style )
     {
-        String fontName = style == null || style.fontName() == null
-                ? "Courier New"
-                : style.fontName();
+        String fontName = style.fontName();
 
-        int fontSize = style == null ? 10 : style.fontSize();
+        int fontSize = style.fontSize();
 
         if( fontSize <= 0 )
             fontSize = 10;
 
         int awtStyle = Font.PLAIN;
 
-        if( style != null && style.bold() )
+        if( style.bold() )
             awtStyle |= Font.BOLD;
 
-        if( style != null && style.italic() )
+        if( style.italic() )
             awtStyle |= Font.ITALIC;
 
         return new Font( fontName, awtStyle, fontSize );

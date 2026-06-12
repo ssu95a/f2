@@ -1,13 +1,19 @@
 package ru.inversion.f2.diagnostic;
 
+import ru.inversion.f2.F2Runtime;
 import ru.inversion.f2.command.F2CommandRegistry;
 import ru.inversion.f2.ini.F2AltIniModel;
+import ru.inversion.f2.ini.F2AltIniModelLoader;
 import ru.inversion.f2.ini.F2MapAltIniModel;
 import ru.inversion.f2.prepared.F2PreparedTextInterpreter;
 import ru.inversion.f2.prepared.F2PreparedTextParser;
 import ru.inversion.f2.prepared.F2PreparedToken;
 import ru.inversion.f2.prepared.F2StyledDocument;
 
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -15,17 +21,20 @@ import java.util.Map;
 
 public final class F2StyledDocumentDumperSmoke {
 
+    private static final String DEFAULT_INI_FILE =
+            "d:\\Java\\Projects\\f2\\src\\test\\ALTPRNT5.INI";
+
     public static void main(String[] args) {
 
-        F2CommandRegistry registry = F2CommandRegistry.make(createModel());
 
-        String text =
-                "`NORMAL`Получатель платежа: ОАО `BOLD+`ТЕПЛО-ЭНЕРГЕТИК`BOLD-`\n"
-                        + "Ф.И.О. `UNDER+`              `UNDER-`|\n"
-                        + "Сумма платежа `UNDER+`12-00`UNDER-`\n"
-                        + "`FF`"
-                        + "Квитанция\n"
-                        + "Подпись `UNDER+`          `UNDER-`";
+        String text = null;
+        F2CommandRegistry registry;
+        try {
+            registry = F2CommandRegistry.make(createModel());
+            text = new String ( Files.readAllBytes( Paths.get("d:\\Java\\Projects\\f2\\src\\test\\ae100020_5012.dat")), Charset.forName("windows-1251") );
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
         List<F2PreparedToken> tokens =
                 new F2PreparedTextParser().parse(text);
@@ -46,32 +55,12 @@ public final class F2StyledDocumentDumperSmoke {
         System.out.println("F2 styled document dumper smoke OK");
     }
 
-    private static F2AltIniModel createModel() {
+    private static F2AltIniModel createModel() throws Exception {
 
-        Map<String, String> graphics = new LinkedHashMap<String, String>();
-
-        graphics.put("UNDER+", "Under=Yes;");
-        graphics.put("UNDER-", "Under=No;");
-
-        graphics.put("BOLD+", "Bold=Yes;");
-        graphics.put("BOLD-", "Bold=No;");
-
-        graphics.put("INTERVAL_6", "Vertical Move=1/6;");
-
-        graphics.put(
-                "NORMAL",
-                "Name Font=Courier New;Size Font=10;Bold=No;Italic=No;Under=No;Cmd=`INTERVAL_6`;"
-        );
-
-        graphics.put("PAGE_END", "Page End=Yes;");
-        graphics.put("FF", "Cmd=`PAGE_END`;");
-
-        return new F2MapAltIniModel(
-                Collections.<String, String>emptyMap(),
-                Collections.<String, String>emptyMap(),
-                graphics,
-                Collections.<String, String>emptyMap()
-        );
+                return new F2AltIniModelLoader().load(
+                        Paths.get(DEFAULT_INI_FILE),
+                        Charset.forName("windows-1251")
+                );
     }
 
     private static void assertContains(String text, String part) {

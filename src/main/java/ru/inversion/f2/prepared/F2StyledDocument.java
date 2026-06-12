@@ -4,11 +4,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/** Стилизованный документ - набор страниц с форматированным текстом */
 public final class F2StyledDocument {
 
     private final List<F2StyledPage> pages;
 
-    public F2StyledDocument(List<F2StyledPage> pages)
+    public F2StyledDocument( List<F2StyledPage> pages )
     {
         if( pages == null || pages.isEmpty() )
             this.pages = Collections.emptyList();

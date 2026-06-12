@@ -22,11 +22,9 @@ public final class F2PrinterMan {
 
     private PrintService selectedPrintService;
 
-    private PrintRequestAttributeSet selectedPrintAttributes =
-            new HashPrintRequestAttributeSet();
+    private PrintRequestAttributeSet selectedPrintAttributes = new HashPrintRequestAttributeSet();
 
-    private final F2PrintPageSetupResolver pageSetupResolver =
-            new F2PrintPageSetupResolver();
+    private final F2PrintPageSetupResolver pageSetupResolver = new F2PrintPageSetupResolver();
 
     private F2PrinterMan( F2AltIniModel iniModel ) {
         this.iniModel = Checks.Require.object(iniModel, "iniModel");
@@ -39,10 +37,7 @@ public final class F2PrinterMan {
 
     /** */
     public F2PrintPageSetup currentPrintPageSetup() throws Exception {
-        return pageSetupResolver.resolve(
-                currentPrintSettings(),
-                isCurrentMatrixPrinter()
-        );
+        return pageSetupResolver.resolve( currentPrintSettings(), isCurrentMatrixPrinter() );
     }
 
     /** */

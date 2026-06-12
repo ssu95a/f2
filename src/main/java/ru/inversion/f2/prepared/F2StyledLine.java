@@ -6,19 +6,20 @@ import java.util.List;
 
 
 /**
-    Зона ответственности:
-    одна логическая строка prepared output: список styled run-ов + line layout snapshot.
+    Одна логическая строка prepared output: список styled chunk + line layout параметры:
+    отступ слева + lineStepPt после строки
 */
 public final class F2StyledLine {
 
     private final List<F2StyledTextChunk> chunks;
+
     private final double lineStepPt;
     private final double leftIndentPt;
 
     public F2StyledLine (
-            List<F2StyledTextChunk> chunks,
-            double lineStepPt,
-            double leftIndentPt
+        List<F2StyledTextChunk> chunks,
+        double lineStepPt,
+        double leftIndentPt
     )
     {
         if( chunks == null || chunks.isEmpty() )
@@ -61,12 +62,9 @@ public final class F2StyledLine {
         return sb.toString();
     }
 
+    /** */
     @Override
     public String toString() {
-        return "F2StyledLine{"
-                + "chunks=" + chunks
-                + ", lineStepPt=" + lineStepPt
-                + ", leftIndentPt=" + leftIndentPt
-                + '}';
+        return "F2StyledLine{" + "chunks=" + chunks + ", lineStepPt=" + lineStepPt + ", leftIndentPt=" + leftIndentPt + '}';
     }
 }

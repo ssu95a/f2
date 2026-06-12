@@ -1,6 +1,6 @@
 package ru.inversion.f2.style;
 
-/** */
+/** Один стиль части текста + фабричные методы для создания производных стилей  */
 public final class F2Style {
 
     private final String  fontName;
@@ -64,8 +64,8 @@ public final class F2Style {
         return new F2Style(fontName, fontSize, bold, italic, value);
     }
 
-    /** */
+    /** Стиль по умолчанию, если не задан в .ini Init команда */
     public static F2Style defaultStyle( ) {
-        return new F2Style("Courier New", 10, false, false, false);
+        return new F2Style( "Courier New", 10, false, false, false );
     }
 }

@@ -51,7 +51,7 @@ public final class F2PreparedTextParser {
             plain.append(ch);
         }
 
-        flushText(result, plain);
+        flushText( result, plain );
 
         return result;
     }
@@ -86,7 +86,7 @@ public final class F2PreparedTextParser {
              */
             if( ch == '\n' )
             {
-                throw F2Errors.of(F2Errors.ErrorCode.COMMAND_CALL_INVALID)
+                throw F2Errors.of( F2Errors.ErrorCode.COMMAND_CALL_INVALID )
                         .param("reason", "Command quote crosses line break")
                         .param("line", position.lineNum() )
                         .param("symb", position.symbNum() )
@@ -124,6 +124,7 @@ public final class F2PreparedTextParser {
             return;
 
         result.add( F2PreparedToken.text(plain.toString()) );
+
         plain.setLength(0);
     }
 }

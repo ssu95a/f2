@@ -38,7 +38,7 @@ public final class F2RenderState {
     }
 
     public static F2RenderState initial ( ) {
-        return new F2RenderState(F2Style.defaultStyle(), 12.0d, 0.0d, OrientationRequested.PORTRAIT);
+        return new F2RenderState( F2Style.defaultStyle(), 12.0d, 0.0d, OrientationRequested.PORTRAIT );
     }
 
     public F2Style style() {

@@ -14,6 +14,7 @@ import java.util.Set;
 
 public final class F2PreparedContentModeDetector {
 
+    /** */
     public F2PreparedContentMode detect( List<F2PreparedToken> tokens, F2CommandRegistry registry )
     {
         Checks.Require.object( registry, "registry" );
@@ -41,7 +42,7 @@ public final class F2PreparedContentModeDetector {
                      */
                     break;
                 case COMMAND:
-                    if( hasFormattingImpact(token.commandCall(), registry) )
+                    if( hasFormatting( token.commandCall(), registry) )
                     {
                         if( payloadStarted )
                             return F2PreparedContentMode.STYLED;
@@ -57,12 +58,12 @@ public final class F2PreparedContentModeDetector {
     }
 
     /** */
-    private boolean hasFormattingImpact( F2CommandCall call, F2CommandRegistry registry )
+    private boolean hasFormatting( F2CommandCall call, F2CommandRegistry registry )
     {
-        return hasFormattingImpact( call, registry, new HashSet<String>() );
+        return hasFormatting( call, registry, new HashSet<String>() );
     }
 
-    private boolean hasFormattingImpact( F2CommandCall call, F2CommandRegistry registry, Set<String> visited )
+    private boolean hasFormatting(F2CommandCall call, F2CommandRegistry registry, Set<String> visited )
     {
         if( call == null )
             return false;
@@ -97,7 +98,7 @@ public final class F2PreparedContentModeDetector {
             {
                 F2CommandCall nested = pv.valueAs( F2CommandCall.class, null );
 
-                if( hasFormattingImpact(nested, registry, visited) )
+                if( hasFormatting(nested, registry, visited) )
                     return true;
             }
         }

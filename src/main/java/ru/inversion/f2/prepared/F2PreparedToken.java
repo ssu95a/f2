@@ -50,7 +50,7 @@ public final class F2PreparedToken {
 
     /** */
     public static F2PreparedToken command(F2CommandCall call) {
-        return new F2PreparedToken( Type.COMMAND, null, Checks.Require.object(call,"call") );
+        return new F2PreparedToken( Type.COMMAND, null, Checks.Require.object( call,"call" ) );
     }
 
     /** */

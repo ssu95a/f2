@@ -56,17 +56,20 @@ public final class F2AwtPageRenderConfig {
             throw new IllegalArgumentException("contentScale <= 0");
 
         this.paperWidthPt = paperWidthPt;
-        this.paperHeightPt = paperHeightPt;
+        this.paperHeightPt= paperHeightPt;
         this.imageableXPt = imageableXPt;
         this.imageableYPt = imageableYPt;
-        this.imageableWidthPt = imageableWidthPt;
-        this.imageableHeightPt = imageableHeightPt;
-        this.dpi = dpi;
+        this.imageableWidthPt
+                          = imageableWidthPt;
+        this.imageableHeightPt
+                          = imageableHeightPt;
+        this.dpi          = dpi;
         this.debugOverlay = debugOverlay;
         this.contentScale = contentScale;
-        this.shrinkToFit = shrinkToFit;
+        this.shrinkToFit  = shrinkToFit;
     }
 
+    /** */
     public F2AwtPageRenderConfig(
             double paperWidthPt,
             double paperHeightPt,

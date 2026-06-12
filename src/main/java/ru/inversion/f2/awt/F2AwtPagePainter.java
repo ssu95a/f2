@@ -50,11 +50,11 @@ public final class F2AwtPagePainter {
         paintScaledPageContent( g, page, config );
     }
 
-    private void paintScaledPageContent(
-            Graphics2D g,
-            F2StyledPage page,
-            F2AwtPageRenderConfig config
-    ) {
+    /** */
+    private void paintScaledPageContent (
+        Graphics2D g, F2StyledPage page, F2AwtPageRenderConfig config
+    )
+    {
         double scale = resolveContentScale(g, page, config);
 
         AffineTransform oldTransform = g.getTransform();
