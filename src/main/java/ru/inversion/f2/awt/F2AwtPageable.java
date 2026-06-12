@@ -25,7 +25,7 @@ public final class F2AwtPageable implements Pageable {
 
         this.document = document;
         this.pageSetup = pageSetup;
-        this.printable = new F2AwtDocumentPrintable(document, pageSetup);
+        this.printable = new F2AwtDocumentPrintable(document);
     }
 
     @Override
@@ -36,9 +36,6 @@ public final class F2AwtPageable implements Pageable {
     @Override
     public PageFormat getPageFormat(int pageIndex) {
         checkPageIndex(pageIndex);
-
-        System.out.println("F2 Pageable getPageFormat page=" + pageIndex
-                + ", landscape=" + document.pages().get(pageIndex).isLandscape());
 
         PageFormat pageFormat = pageSetup.pageFormat();
 
@@ -53,7 +50,6 @@ public final class F2AwtPageable implements Pageable {
     @Override
     public Printable getPrintable(int pageIndex) {
         checkPageIndex(pageIndex);
-        System.out.println("F2 Pageable getPrintable page=" + pageIndex);
         return printable;
     }
 
