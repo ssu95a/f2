@@ -20,12 +20,25 @@ public final class F2PrintService {
     private final F2PreparedTextInterpreter preparedTextInterpreter = new F2PreparedTextInterpreter();
 
     public F2PrintResult printPreparedText( String text ) throws Exception {
+        return printPreparedText(
+                text,
+                F2PrintListener.NONE
+        );
+    }
+
+    public F2PrintResult printPreparedText(
+            String text,
+            F2PrintListener listener
+    ) throws Exception {
 
         Checks.Require.text(text, "text");
 
         F2StyledDocument document = prepareDocument(text);
 
-        return printDocument(document);
+        return printDocument(
+                document,
+                listener
+        );
     }
 
     /** */
@@ -44,6 +57,17 @@ public final class F2PrintService {
 
     /** */
     public F2PrintResult printDocument(F2StyledDocument document) throws Exception {
+        return printDocument(
+                document,
+                F2PrintListener.NONE
+        );
+    }
+
+    /** */
+    public F2PrintResult printDocument(
+            F2StyledDocument document,
+            F2PrintListener listener
+    ) throws Exception {
 
         Checks.Require.object(document, "document");
 
@@ -55,13 +79,29 @@ public final class F2PrintService {
             );
         }
 
-        return printGraphics(document, printerMan);
+        return printGraphics(
+                document,
+                printerMan,
+                listener
+        );
     }
 
     /** */
-    private F2PrintResult printGraphics( F2StyledDocument document, F2PrinterMan printerMan ) throws Exception
+    private F2PrintResult printGraphics(
+            F2StyledDocument document,
+            F2PrinterMan printerMan,
+            F2PrintListener listener
+    ) throws Exception
     {
+        F2PrintListener safeListener = listener == null ? F2PrintListener.NONE : listener;
+
         F2PrintPageSetup setup = printerMan.currentPrintPageSetup();
+
+        F2PrintJobInfo jobInfo = new F2PrintJobInfo(
+                setup,
+                printerMan.currentDriverRef(),
+                document.pageCount()
+        );
 
         PrinterJob job = PrinterJob.getPrinterJob();
 
@@ -71,11 +111,36 @@ public final class F2PrintService {
 
         job.setJobName("F2 report");
 
-        job.setPageable( new F2AwtPageable( document, setup ) );
-
-        job.print (
-            setup.attributesCopy()
+        job.setPageable(
+                new F2AwtPageable(
+                        document,
+                        setup,
+                        jobInfo,
+                        safeListener
+                )
         );
+
+        Exception finalError = null;
+
+        try {
+            safeListener.onBeginPrint(jobInfo);
+
+            job.print(
+                setup.attributesCopy()
+            );
+
+            safeListener.onEndPrint(jobInfo);
+        }
+        catch (Exception ex) {
+            finalError = ex;
+            throw ex;
+        }
+        finally {
+            safeListener.onFinalPrint(
+                    jobInfo,
+                    finalError
+            );
+        }
 
         return new F2PrintResult(
                 setup.printService().getName(),
