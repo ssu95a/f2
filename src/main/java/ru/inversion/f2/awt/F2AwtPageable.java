@@ -1,6 +1,8 @@
 package ru.inversion.f2.awt;
 
 import ru.inversion.f2.prepared.F2StyledDocument;
+import ru.inversion.f2.print.F2PrintJobInfo;
+import ru.inversion.f2.print.F2PrintListener;
 import ru.inversion.f2.print.F2PrintPageSetup;
 
 import java.awt.print.PageFormat;
@@ -17,6 +19,20 @@ public final class F2AwtPageable implements Pageable {
             F2StyledDocument document,
             F2PrintPageSetup pageSetup
     ) {
+        this(
+                document,
+                pageSetup,
+                null,
+                F2PrintListener.NONE
+        );
+    }
+
+    public F2AwtPageable(
+            F2StyledDocument document,
+            F2PrintPageSetup pageSetup,
+            F2PrintJobInfo jobInfo,
+            F2PrintListener listener
+    ) {
         if (document == null)
             throw new IllegalArgumentException("document is null");
 
@@ -25,7 +41,11 @@ public final class F2AwtPageable implements Pageable {
 
         this.document = document;
         this.pageSetup = pageSetup;
-        this.printable = new F2AwtDocumentPrintable(document);
+        this.printable = new F2AwtDocumentPrintable(
+                document,
+                jobInfo,
+                listener
+        );
     }
 
     @Override
