@@ -78,6 +78,9 @@ public final class F2AwtDocumentPrintable implements Printable {
     @Override
     public int print( Graphics graphics, PageFormat pageFormat, int pageIndex )
     {
+        if (listener.isCancelled())
+            return NO_SUCH_PAGE;
+
         if (pageIndex < 0 || pageIndex >= document.pageCount())
             return NO_SUCH_PAGE;
 
