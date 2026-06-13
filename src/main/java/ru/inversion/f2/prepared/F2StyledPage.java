@@ -10,9 +10,9 @@ public final class F2StyledPage {
     private final List<F2StyledLine> lines;
     private final OrientationRequested orientation;
 
-    public F2StyledPage(List<F2StyledLine> lines)
+    public F2StyledPage( List<F2StyledLine> lines )
     {
-        this(lines, OrientationRequested.PORTRAIT);
+        this(lines, OrientationRequested.PORTRAIT );
     }
 
     public F2StyledPage( List<F2StyledLine> lines, OrientationRequested orientation )
@@ -30,6 +30,7 @@ public final class F2StyledPage {
         return lines;
     }
 
+    /** */
     public OrientationRequested orientation() {
         return orientation;
     }
@@ -37,6 +38,7 @@ public final class F2StyledPage {
     public boolean isLandscape() {
         return OrientationRequested.LANDSCAPE.equals(orientation) || OrientationRequested.REVERSE_LANDSCAPE.equals(orientation);
     }
+
     /** */
     public boolean isEmpty() {
         return lines.isEmpty();

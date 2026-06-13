@@ -52,12 +52,12 @@ public final class F2StyledLine {
     }
 
     /** */
-    public String plainText()
+    public String plainText( )
     {
         StringBuilder sb = new StringBuilder();
 
-        for( F2StyledTextChunk run : chunks )
-             sb.append( run.text() );
+        for( F2StyledTextChunk chunk : chunks )
+             sb.append( chunk.text() );
 
         return sb.toString();
     }

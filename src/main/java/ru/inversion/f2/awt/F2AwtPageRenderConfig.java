@@ -5,13 +5,16 @@ import ru.inversion.f2.print.F2PrintPageSetup;
 
 import java.awt.print.PageFormat;
 
+/** Основной класс с характеристиками для печатаемой страницы */
 public final class F2AwtPageRenderConfig {
 
     private static final double DEFAULT_DPI = 144.0d;
 
+    //Размеры страницы
     private final double paperWidthPt;
     private final double paperHeightPt;
 
+    // Размеры области доступной для печати
     private final double imageableXPt;
     private final double imageableYPt;
     private final double imageableWidthPt;
@@ -19,24 +22,28 @@ public final class F2AwtPageRenderConfig {
 
     private final double dpi;
 
+    // Печать границ страницы
     private final boolean debugOverlay;
 
+    // Масштаб
     private final double contentScale;
+
+    // Признак, что надо сжимать изображеие, если не влезает содержимое
     private final boolean shrinkToFit;
 
-    private F2AwtPageRenderConfig(
-            double paperWidthPt,
-            double paperHeightPt,
-            double imageableXPt,
-            double imageableYPt,
-            double imageableWidthPt,
-            double imageableHeightPt,
-            double dpi,
-            boolean debugOverlay,
-            double contentScale,
-            boolean shrinkToFit
-    ) {
-
+    private F2AwtPageRenderConfig (
+        double paperWidthPt,
+        double paperHeightPt,
+        double imageableXPt,
+        double imageableYPt,
+        double imageableWidthPt,
+        double imageableHeightPt,
+        double dpi,
+        boolean debugOverlay,
+        double contentScale,
+        boolean shrinkToFit
+    )
+    {
         if( paperWidthPt <= 0.0d )
             throw new IllegalArgumentException("paperWidthPt <= 0");
 

@@ -9,6 +9,9 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.font.TextLayout;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public final class F2AwtLineRenderer {
 
@@ -46,7 +49,7 @@ public final class F2AwtLineRenderer {
 
     /**
      * Рисует строку по-заданному baseline.
-     * Все runs строки рисуются на одной baselineY.
+     * Все элементы строки рисуются на одной baselineY.
      */
     public F2AwtLineMetrics paint( Graphics2D g, F2StyledLine line, double xPt, double baselineYPt )
     {
@@ -59,17 +62,17 @@ public final class F2AwtLineRenderer {
 
         double x = xPt;
 
-        for( F2StyledTextChunk run : line.chunks() )
+        for( F2StyledTextChunk chunk : line.chunks() )
         {
-            if( isEmpty(run) )
+            if( chunk == null || chunk.isEmpty() )
                 continue;
 
-            TextLayout layout = createTextLayout(g, run);
+            TextLayout layout = createTextLayout( g, chunk );
 
             layout.draw( g, (float) x, (float) baselineYPt );
 
-            if( run.style() != null && run.style().underline() )
-                paintUnderline( g, x, baselineYPt, layout.getAdvance(), layout.getDescent() );
+            if( chunk.style() != null && chunk.style().underline() )
+                drawUnderline( g, x, baselineYPt, layout.getAdvance(), layout.getDescent() );
 
             x += layout.getAdvance();
         }
@@ -77,25 +80,31 @@ public final class F2AwtLineRenderer {
         return metrics;
     }
 
-    private TextLayout createTextLayout(
-            Graphics2D g,
-            F2StyledTextChunk run
-    ) {
-        Font font = toAwtFont(run.style());
-
+    /** */
+    private TextLayout createTextLayout (
+        Graphics2D g,
+        F2StyledTextChunk chunk
+    )
+    {
+        Font font = toAwtFont (chunk.style() );
         /*
          * TextLayout берёт FontRenderContext из того же Graphics2D,
          * которым потом рисуем. Это важно для совпадения measure/paint.
          */
         return new TextLayout (
-            run.text(), font, g.getFontRenderContext()
+            chunk.text(), font, g.getFontRenderContext()
         );
     }
+
+
+    final static private Map<String, Font> fontCache = new ConcurrentHashMap<>();
 
     /** */
     private Font toAwtFont( F2Style style )
     {
         String fontName = style.fontName();
+
+        final int[] fp = new int[2];
 
         int fontSize = style.fontSize();
 
@@ -110,11 +119,19 @@ public final class F2AwtLineRenderer {
         if( style.italic() )
             awtStyle |= Font.ITALIC;
 
-        return new Font( fontName, awtStyle, fontSize );
+        fp[0] = fontSize;
+        fp[1] = awtStyle;
+
+        String key = String.join( "-", fontName,  Integer.toString(fontSize),  Integer.toString( awtStyle ) );
+
+        return fontCache.computeIfAbsent( key, (k)-> new Font( fontName, fp[1], fp[0] )  );
     }
 
-    /** */
-    private void paintUnderline (
+    /**
+     * Underline вручную, чтобы не зависеть от AttributedString.
+     * Позиция немного ниже baseline.
+     */
+    private void drawUnderline(
         Graphics2D g,
         double x,
         double baselineY,
@@ -122,18 +139,9 @@ public final class F2AwtLineRenderer {
         double descent
     )
     {
-        /*
-         * MVP:
-         * underline вручную, чтобы не зависеть от AttributedString.
-         * Позиция немного ниже baseline.
-         */
         double y = baselineY + Math.max( 1.0d, descent * 0.35d );
 
         g.draw( new java.awt.geom.Line2D.Double( x, y, x + width, y  ));
     }
 
-    /** */
-    private static boolean isEmpty(F2StyledTextChunk run) {
-        return run == null || run.isEmpty();
-    }
 }

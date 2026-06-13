@@ -235,7 +235,7 @@ public final class F2AwtPagePainter {
         {
             double x = line.leftIndentPt();
 
-            F2AwtLineMetrics metrics = lineRenderer.measure(g, line);
+            F2AwtLineMetrics metrics = lineRenderer.measure( g, line );
 
             double baselineY = y + metrics.ascentPt();
 
