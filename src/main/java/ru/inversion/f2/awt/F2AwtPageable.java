@@ -1,8 +1,9 @@
 package ru.inversion.f2.awt;
 
 import ru.inversion.f2.prepared.F2StyledDocument;
+import ru.inversion.f2.print.F2PrintJobInfo;
+import ru.inversion.f2.print.F2PrintListener;
 import ru.inversion.f2.print.F2PrintPageSetup;
-import ru.inversion.utils.Checks;
 
 import java.awt.print.PageFormat;
 import java.awt.print.Pageable;
@@ -14,15 +15,37 @@ public final class F2AwtPageable implements Pageable {
     private final Printable        printable;
     private final F2PrintPageSetup pageSetup;
 
-    public F2AwtPageable (
-        F2StyledDocument document,
-        F2PrintPageSetup pageSetup
-    )
-    {
-        this.document  = Checks.Require.object(document, "document" );
-        this.pageSetup = Checks.Require.object(pageSetup,"pageSetup");
+    public F2AwtPageable(
+            F2StyledDocument document,
+            F2PrintPageSetup pageSetup
+    ) {
+        this(
+                document,
+                pageSetup,
+                null,
+                F2PrintListener.NONE
+        );
+    }
 
-        this.printable = new F2AwtDocumentPrintable(document);
+    public F2AwtPageable(
+            F2StyledDocument document,
+            F2PrintPageSetup pageSetup,
+            F2PrintJobInfo jobInfo,
+            F2PrintListener listener
+    ) {
+        if (document == null)
+            throw new IllegalArgumentException("document is null");
+
+        if (pageSetup == null)
+            throw new IllegalArgumentException("pageSetup is null");
+
+        this.document = document;
+        this.pageSetup = pageSetup;
+        this.printable = new F2AwtDocumentPrintable(
+                document,
+                jobInfo,
+                listener
+        );
     }
 
     @Override
@@ -31,16 +54,15 @@ public final class F2AwtPageable implements Pageable {
     }
 
     @Override
-    public PageFormat getPageFormat(int pageIndex)
-    {
+    public PageFormat getPageFormat(int pageIndex) {
         checkPageIndex(pageIndex);
 
         PageFormat pageFormat = pageSetup.pageFormat();
 
-        if( document.pages().get(pageIndex).isLandscape() )
+        if (document.pages().get(pageIndex).isLandscape())
             pageFormat.setOrientation(PageFormat.LANDSCAPE);
         else
-            pageFormat.setOrientation(PageFormat.PORTRAIT );
+            pageFormat.setOrientation(PageFormat.PORTRAIT);
 
         return pageFormat;
     }
