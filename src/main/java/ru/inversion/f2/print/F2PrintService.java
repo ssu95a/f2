@@ -8,6 +8,8 @@ import ru.inversion.f2.command.F2CommandRegistry;
 import ru.inversion.f2.prepared.*;
 import ru.inversion.utils.Checks;
 
+import javax.print.attribute.PrintRequestAttributeSet;
+import javax.print.attribute.standard.Copies;
 import java.awt.print.PrinterJob;
 import java.lang.invoke.MethodHandles;
 
@@ -51,6 +53,9 @@ public final class F2PrintService {
             );
         }
 
+        PrintRequestAttributeSet attributes = setup.attributesCopy();
+        int copies = resolveCopies(attributes);
+
         String driverRef = F2Runtime.get()
                 .printerMan()
                 .driverRef(setup.printService().getName());
@@ -58,7 +63,8 @@ public final class F2PrintService {
         F2PrintJobInfo jobInfo = new F2PrintJobInfo(
                 setup,
                 driverRef,
-                document.pageCount()
+                document.pageCount(),
+                copies
         );
 
         PrinterJob job = PrinterJob.getPrinterJob();
@@ -83,9 +89,7 @@ public final class F2PrintService {
         try {
             safeListener.onBeginPrint(jobInfo);
 
-            job.print(
-                setup.attributesCopy()
-            );
+            job.print(attributes);
 
             safeListener.onEndPrint(jobInfo);
         }
@@ -105,5 +109,15 @@ public final class F2PrintService {
                 jobInfo.driverRef(),
                 document.pageCount()
         );
+    }
+
+    private int resolveCopies(PrintRequestAttributeSet attributes) {
+        if (attributes == null)
+            return 1;
+
+        Copies copies =
+                (Copies) attributes.get(Copies.class);
+
+        return copies == null ? 1 : copies.getValue();
     }
 }
