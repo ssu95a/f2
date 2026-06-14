@@ -51,9 +51,13 @@ public final class F2PrintService {
             );
         }
 
+        String driverRef = F2Runtime.get()
+                .printerMan()
+                .driverRef(setup.printService().getName());
+
         F2PrintJobInfo jobInfo = new F2PrintJobInfo(
                 setup,
-                F2Runtime.get().printerMan().currentDriverRef(),
+                driverRef,
                 document.pageCount()
         );
 
