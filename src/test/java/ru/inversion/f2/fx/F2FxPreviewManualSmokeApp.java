@@ -24,7 +24,6 @@ import ru.inversion.f2.print.F2PrintSettings;
 
 import javax.print.PrintService;
 import javax.print.attribute.HashPrintRequestAttributeSet;
-import javax.print.attribute.PrintRequestAttribute;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.print.attribute.standard.MediaPrintableArea;
 import java.nio.charset.Charset;
@@ -114,7 +113,7 @@ public class F2FxPreviewManualSmokeApp extends Application {
 
             try {
                 state.copyCount = newValue.intValue();
-                setCopyCount(state.attributes, state.copyCount);
+                F2PrintService.applyCopies(state.attributes, state.copyCount);
 
                 F2PrintPageSetup newPageSetup =
                         resolvePageSetup(
@@ -224,25 +223,6 @@ public class F2FxPreviewManualSmokeApp extends Application {
         return spinner;
     }
 
-    private void setCopyCount(
-            PrintRequestAttributeSet attributes,
-            int copyCount
-    ) throws Exception {
-        if (attributes == null)
-            throw new IllegalArgumentException("attributes is null");
-
-        Class<?> attributeClass = Class.forName(
-                "javax.print.attribute.standard." + "Cop" + "ies"
-        );
-
-        Object attribute =
-                attributeClass
-                        .getConstructor(Integer.TYPE)
-                        .newInstance(Integer.valueOf(copyCount));
-
-        attributes.add((PrintRequestAttribute) attribute);
-    }
-
     private void selectPrinter(
             ComboBox<PrintService> comboBox,
             PrintService selectedService
@@ -350,7 +330,7 @@ public class F2FxPreviewManualSmokeApp extends Application {
                 document,
                 setup,
                 attributes,
-                1
+                F2PrintService.resolveCopies(attributes)
         );
     }
 
