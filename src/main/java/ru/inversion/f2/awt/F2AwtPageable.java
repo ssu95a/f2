@@ -1,80 +1,11 @@
 package ru.inversion.f2.awt;
 
-import ru.inversion.f2.prepared.F2StyledDocument;
-import ru.inversion.f2.print.F2PrintJobInfo;
-import ru.inversion.f2.print.F2PrintListener;
-import ru.inversion.f2.print.F2PrintPageSetup;
+import ru.inversion.f2.print.F2PrintJob;
 
-import java.awt.print.PageFormat;
-import java.awt.print.Pageable;
-import java.awt.print.Printable;
+public final class F2AwtPageable {
+    private final F2PrintJob job;
 
-public final class F2AwtPageable implements Pageable {
-
-    private final F2StyledDocument document;
-    private final Printable        printable;
-    private final F2PrintPageSetup pageSetup;
-
-    public F2AwtPageable(
-            F2StyledDocument document,
-            F2PrintPageSetup pageSetup
-    ) {
-        this(
-                document,
-                pageSetup,
-                null,
-                F2PrintListener.NONE
-        );
-    }
-
-    public F2AwtPageable(
-            F2StyledDocument document,
-            F2PrintPageSetup pageSetup,
-            F2PrintJobInfo jobInfo,
-            F2PrintListener listener
-    ) {
-        if (document == null)
-            throw new IllegalArgumentException("document is null");
-
-        if (pageSetup == null)
-            throw new IllegalArgumentException("pageSetup is null");
-
-        this.document = document;
-        this.pageSetup = pageSetup;
-        this.printable = new F2AwtDocumentPrintable(
-                document,
-                jobInfo,
-                listener
-        );
-    }
-
-    @Override
-    public int getNumberOfPages() {
-        return document.pageCount();
-    }
-
-    @Override
-    public PageFormat getPageFormat(int pageIndex) {
-        checkPageIndex(pageIndex);
-
-        PageFormat pageFormat = pageSetup.pageFormat();
-
-        if (document.pages().get(pageIndex).isLandscape())
-            pageFormat.setOrientation(PageFormat.LANDSCAPE);
-        else
-            pageFormat.setOrientation(PageFormat.PORTRAIT);
-
-        return pageFormat;
-    }
-
-    @Override
-    public Printable getPrintable(int pageIndex) {
-        checkPageIndex(pageIndex);
-        return printable;
-    }
-
-    private void checkPageIndex(int pageIndex) {
-        if( pageIndex < 0 || pageIndex >= document.pageCount() )
-            throw new IndexOutOfBoundsException("pageIndex=" + pageIndex);
+    public F2AwtPageable(F2PrintJob job) {
+        this.job = job;
     }
 }
