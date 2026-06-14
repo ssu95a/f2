@@ -14,9 +14,11 @@ import java.awt.print.Printable;
 public final class F2AwtDocumentPrintable implements Printable {
 
     private final F2StyledDocument document;
+
     private final F2AwtPagePainter painter;
-    private final F2PrintJobInfo jobInfo;
-    private final F2PrintListener listener;
+
+    private final F2PrintJobInfo   jobInfo;
+    private final F2PrintListener  listener;
 
     public F2AwtDocumentPrintable(
             F2StyledDocument document

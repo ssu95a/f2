@@ -47,6 +47,7 @@ public final class F2AwtLineRenderer {
         return new F2AwtLineMetrics( width, maxAscent, maxDescent, maxLeading );
     }
 
+
     /**
      * Рисует строку по-заданному baseline.
      * Все элементы строки рисуются на одной baselineY.
@@ -86,7 +87,7 @@ public final class F2AwtLineRenderer {
         F2StyledTextChunk chunk
     )
     {
-        Font font = toAwtFont (chunk.style() );
+        Font font = toAwtFont( chunk.style() );
         /*
          * TextLayout берёт FontRenderContext из того же Graphics2D,
          * которым потом рисуем. Это важно для совпадения measure/paint.
@@ -96,15 +97,13 @@ public final class F2AwtLineRenderer {
         );
     }
 
-
+    /** */
     final static private Map<String, Font> fontCache = new ConcurrentHashMap<>();
 
     /** */
     private Font toAwtFont( F2Style style )
     {
         String fontName = style.fontName();
-
-        final int[] fp = new int[2];
 
         int fontSize = style.fontSize();
 
@@ -119,6 +118,7 @@ public final class F2AwtLineRenderer {
         if( style.italic() )
             awtStyle |= Font.ITALIC;
 
+        final int[] fp = new int[2];
         fp[0] = fontSize;
         fp[1] = awtStyle;
 
@@ -140,7 +140,6 @@ public final class F2AwtLineRenderer {
     )
     {
         double y = baselineY + Math.max( 1.0d, descent * 0.35d );
-
         g.draw( new java.awt.geom.Line2D.Double( x, y, x + width, y  ));
     }
 

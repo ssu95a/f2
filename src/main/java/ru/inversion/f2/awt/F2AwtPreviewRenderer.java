@@ -13,30 +13,24 @@ public final class F2AwtPreviewRenderer {
 
     private final F2AwtPagePainter painter = new F2AwtPagePainter();
 
+    /** */
     public BufferedImage render( F2StyledPage page, F2PrintPageSetup pageSetup )
     {
         return render( page, F2AwtPageRenderConfig.fromPrintPageSetup( pageSetup, page ) .withShrinkToFit(true) );
     }
 
-    public BufferedImage render (
-        F2StyledPage page,
-        F2PrintPageSetup pageSetup,
-        double dpi,
-        boolean debugOverlay
-    )
+    /** */
+    public BufferedImage render ( F2StyledPage page, F2PrintPageSetup pageSetup, double dpi, boolean debugOverlay )
     {
         return render( page, F2AwtPageRenderConfig.fromPrintPageSetup( pageSetup, page, dpi, debugOverlay ).withShrinkToFit(true) );
     }
 
 
     /** */
-    private BufferedImage render(
-        F2StyledPage page,
-        F2AwtPageRenderConfig config
-    )
+    private BufferedImage render( F2StyledPage page, F2AwtPageRenderConfig config )
     {
-        Checks.Require.object(page, "page");
-        Checks.Require.object(config, "config");
+        Checks.Require.object( page, "page" );
+        Checks.Require.object( config, "config" );
 
         BufferedImage image = new BufferedImage( config.imageWidthPx(), config.imageHeightPx(), BufferedImage.TYPE_INT_ARGB );
 

@@ -2,28 +2,26 @@ package ru.inversion.f2.print;
 
 public interface F2PrintListener {
 
-    F2PrintListener NONE = new F2PrintListener() {
-    };
+    final public static F2PrintListener NONE = new F2PrintListener() { };
 
-    default void onBeginPrint(F2PrintJobInfo jobInfo) {
-    }
+    /** Перед началом печати */
+    default void onBeginPrint(F2PrintJobInfo jobInfo)
+    { }
 
-    default void onEndPrint(F2PrintJobInfo jobInfo) {
-    }
+    /** После последней страницы */
+    default void onEndPrint(F2PrintJobInfo jobInfo)
+    { }
 
-    default void onPagePrinted(
-            F2PrintJobInfo jobInfo,
-            int pageIndex
-    ) {
-    }
+    /** После печати одной страницы */
+    default void onPagePrinted( F2PrintJobInfo jobInfo, int pageIndex )
+    { }
 
+    /** Признак, что была отмена печати */
     default boolean isCancelled() {
         return false;
     }
 
-    default void onFinalPrint(
-            F2PrintJobInfo jobInfo,
-            Exception ex
-    ) {
-    }
+    /** На завершение всего процесса печати */
+    default void onFinalPrint( F2PrintJobInfo jobInfo, Exception ex )
+    { }
 }
