@@ -19,7 +19,7 @@ public final class F2FxPreviewPane extends BorderPane {
     private final ImageView imageView = new ImageView();
     private final ScrollPane scrollPane = new ScrollPane(imageView);
 
-    public F2StyledDocument document;
+    private F2StyledDocument document;
     private F2PrintPageSetup pageSetup;
     private int pageIndex;
     private double dpi = DEFAULT_DPI;
@@ -45,6 +45,13 @@ public final class F2FxPreviewPane extends BorderPane {
         this.pageSetup = Checks.Require.object(pageSetup, "pageSetup");
         this.pageIndex = 0;
         renderCurrentPage();
+    }
+
+    public void setPageSetup(F2PrintPageSetup pageSetup) {
+        this.pageSetup = Checks.Require.object(pageSetup, "pageSetup");
+
+        if (isPreviewReady())
+            renderCurrentPage();
     }
 
     public void setPageIndex(int pageIndex) {
@@ -83,6 +90,14 @@ public final class F2FxPreviewPane extends BorderPane {
 
         if (isPreviewReady())
             renderCurrentPage();
+    }
+
+    public F2StyledDocument document() {
+        return document;
+    }
+
+    public F2PrintPageSetup pageSetup() {
+        return pageSetup;
     }
 
     public int pageIndex() {
