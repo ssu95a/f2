@@ -24,6 +24,7 @@ import ru.inversion.f2.print.F2PrintSettings;
 
 import javax.print.PrintService;
 import javax.print.attribute.HashPrintRequestAttributeSet;
+import javax.print.attribute.PrintRequestAttribute;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.print.attribute.standard.MediaPrintableArea;
 import java.nio.charset.Charset;
@@ -78,7 +79,7 @@ public class F2FxPreviewManualSmokeApp extends Application {
                 newPrinterComboBox(state.pageSetup.printService());
 
         Spinner<Integer> copiesSpinner =
-                newCopiesSpinner(1);
+                newCopiesSpinner(state.copyCount);
 
         Label printerLabel = new Label(
                 printerCaption(state.pageSetup.printService())
@@ -104,6 +105,31 @@ public class F2FxPreviewManualSmokeApp extends Application {
 
                 if (oldValue != null)
                     printerComboBox.setValue(oldValue);
+            }
+        });
+
+        copiesSpinner.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue == null)
+                return;
+
+            try {
+                state.copyCount = newValue.intValue();
+                setCopyCount(state.attributes, state.copyCount);
+
+                F2PrintPageSetup newPageSetup =
+                        resolvePageSetup(
+                                printerComboBox.getValue(),
+                                state.attributes
+                        );
+
+                state.pageSetup = newPageSetup;
+                previewPane.setPageSetup(newPageSetup);
+            }
+            catch (Exception ex) {
+                ex.printStackTrace();
+
+                if (oldValue != null)
+                    copiesSpinner.getValueFactory().setValue(oldValue);
             }
         });
 
@@ -182,20 +208,39 @@ public class F2FxPreviewManualSmokeApp extends Application {
         return comboBox;
     }
 
-    private Spinner<Integer> newCopiesSpinner(int copies) {
+    private Spinner<Integer> newCopiesSpinner(int copyCount) {
         Spinner<Integer> spinner = new Spinner<>();
 
         spinner.setValueFactory(
                 new SpinnerValueFactory.IntegerSpinnerValueFactory(
                         1,
                         99,
-                        copies
+                        copyCount
                 )
         );
 
         spinner.setPrefWidth(80.0d);
 
         return spinner;
+    }
+
+    private void setCopyCount(
+            PrintRequestAttributeSet attributes,
+            int copyCount
+    ) throws Exception {
+        if (attributes == null)
+            throw new IllegalArgumentException("attributes is null");
+
+        Class<?> attributeClass = Class.forName(
+                "javax.print.attribute.standard." + "Cop" + "ies"
+        );
+
+        Object attribute =
+                attributeClass
+                        .getConstructor(Integer.TYPE)
+                        .newInstance(Integer.valueOf(copyCount));
+
+        attributes.add((PrintRequestAttribute) attribute);
     }
 
     private void selectPrinter(
@@ -304,7 +349,8 @@ public class F2FxPreviewManualSmokeApp extends Application {
         return new PreviewState(
                 document,
                 setup,
-                attributes
+                attributes,
+                1
         );
     }
 
@@ -357,15 +403,18 @@ public class F2FxPreviewManualSmokeApp extends Application {
         private final F2StyledDocument document;
         private F2PrintPageSetup pageSetup;
         private final PrintRequestAttributeSet attributes;
+        private int copyCount;
 
         private PreviewState(
                 F2StyledDocument document,
                 F2PrintPageSetup pageSetup,
-                PrintRequestAttributeSet attributes
+                PrintRequestAttributeSet attributes,
+                int copyCount
         ) {
             this.document = document;
             this.pageSetup = pageSetup;
             this.attributes = attributes;
+            this.copyCount = copyCount;
         }
     }
 
