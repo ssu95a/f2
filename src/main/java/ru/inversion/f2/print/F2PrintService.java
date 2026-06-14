@@ -19,28 +19,6 @@ public final class F2PrintService {
 
     private final F2PreparedTextInterpreter preparedTextInterpreter = new F2PreparedTextInterpreter();
 
-    public F2PrintResult printPreparedText( String text ) throws Exception {
-        return printPreparedText(
-                text,
-                F2PrintListener.NONE
-        );
-    }
-
-    public F2PrintResult printPreparedText(
-            String text,
-            F2PrintListener listener
-    ) throws Exception {
-
-        Checks.Require.text(text, "text");
-
-        F2StyledDocument document = prepareDocument(text);
-
-        return printDocument(
-                document,
-                listener
-        );
-    }
-
     /** */
     public F2StyledDocument prepareDocument( String text)
     {
@@ -56,50 +34,26 @@ public final class F2PrintService {
     }
 
     /** */
-    public F2PrintResult printDocument(F2StyledDocument document) throws Exception {
-        return printDocument(
-                document,
-                F2PrintListener.NONE
-        );
-    }
-
-    /** */
     public F2PrintResult printDocument(
             F2StyledDocument document,
+            F2PrintPageSetup setup,
             F2PrintListener listener
     ) throws Exception {
 
         Checks.Require.object(document, "document");
+        Checks.Require.object(setup, "setup");
 
-        F2PrinterMan printerMan = F2Runtime.get().printerMan();
+        F2PrintListener safeListener = listener == null ? F2PrintListener.NONE : listener;
 
-        if( printerMan.isCurrentMatrixPrinter()) {
+        if (setup.matrixPrinter()) {
             throw new UnsupportedOperationException(
                     "CodeText / ESC print path is not implemented yet"
             );
         }
 
-        return printGraphics(
-                document,
-                printerMan,
-                listener
-        );
-    }
-
-    /** */
-    private F2PrintResult printGraphics(
-            F2StyledDocument document,
-            F2PrinterMan printerMan,
-            F2PrintListener listener
-    ) throws Exception
-    {
-        F2PrintListener safeListener = listener == null ? F2PrintListener.NONE : listener;
-
-        F2PrintPageSetup setup = printerMan.currentPrintPageSetup();
-
         F2PrintJobInfo jobInfo = new F2PrintJobInfo(
                 setup,
-                printerMan.currentDriverRef(),
+                F2Runtime.get().printerMan().currentDriverRef(),
                 document.pageCount()
         );
 
@@ -144,7 +98,7 @@ public final class F2PrintService {
 
         return new F2PrintResult(
                 setup.printService().getName(),
-                printerMan.currentDriverRef(),
+                jobInfo.driverRef(),
                 document.pageCount()
         );
     }
