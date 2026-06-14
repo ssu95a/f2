@@ -1,20 +1,28 @@
 package ru.inversion.f2.fx;
 
 import javafx.application.Application;
+import javafx.collections.FXCollections;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import ru.inversion.f2.F2Runtime;
 import ru.inversion.f2.ini.F2AltIniModelLoader;
 import ru.inversion.f2.prepared.F2StyledDocument;
+import ru.inversion.f2.print.F2PrintListener;
 import ru.inversion.f2.print.F2PrintPageSetup;
+import ru.inversion.f2.print.F2PrintPageSetupResolver;
 import ru.inversion.f2.print.F2PrintService;
+import ru.inversion.f2.print.F2PrintSettings;
 
+import javax.print.PrintService;
 import javax.print.attribute.HashPrintRequestAttributeSet;
+import javax.print.attribute.PrintRequestAttributeSet;
 import javax.print.attribute.standard.MediaPrintableArea;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -31,6 +39,8 @@ public class F2FxPreviewManualSmokeApp extends Application {
 
     private static final String DEFAULT_PRINTER_NAME =
             "Microsoft Print to PDF";
+
+    private final F2PrintPageSetupResolver pageSetupResolver = new F2PrintPageSetupResolver();
 
     public static void main(String[] args) {
         launch(args);
@@ -50,20 +60,57 @@ public class F2FxPreviewManualSmokeApp extends Application {
         previewPane.setDebugOverlay(true);
 
         BorderPane root = new BorderPane(previewPane);
-        root.setTop(newToolbar(previewPane));
+        root.setTop(newToolbar(previewPane, state));
 
         stage.setTitle("F2 JavaFX Preview Smoke");
         stage.setScene(new Scene(root, 1000, 800));
         stage.show();
     }
 
-    private HBox newToolbar(F2FxPreviewPane previewPane) {
+    private HBox newToolbar(
+            F2FxPreviewPane previewPane,
+            PreviewState state
+    ) {
+
+        ComboBox<PrintService> printerComboBox =
+                newPrinterComboBox(state.pageSetup.printService());
+
+        Label printerLabel = new Label(
+                printerCaption(state.pageSetup.printService())
+        );
+
+        printerComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue == null)
+                return;
+
+            try {
+                F2PrintPageSetup newPageSetup =
+                        resolvePageSetup(
+                                newValue,
+                                state.attributes
+                        );
+
+                state.pageSetup = newPageSetup;
+                previewPane.setPageSetup(newPageSetup);
+                printerLabel.setText(printerCaption(newValue));
+            }
+            catch (Exception ex) {
+                ex.printStackTrace();
+
+                if (oldValue != null)
+                    printerComboBox.setValue(oldValue);
+            }
+        });
 
         Button printButton = new Button("Print");
 
         printButton.setOnAction(event -> {
             try {
-                new F2PrintService().printDocument( previewPane.document );
+                new F2PrintService().printDocument(
+                        previewPane.document(),
+                        previewPane.pageSetup(),
+                        F2PrintListener.NONE
+                );
             }
             catch (Exception ex) {
                 ex.printStackTrace();
@@ -93,6 +140,9 @@ public class F2FxPreviewManualSmokeApp extends Application {
 
         HBox toolbar = new HBox(
                 8.0d,
+                new Label("Printer:"),
+                printerComboBox,
+                printerLabel,
                 previousButton,
                 pageLabel,
                 nextButton,
@@ -105,6 +155,55 @@ public class F2FxPreviewManualSmokeApp extends Application {
         updatePageControls(previewPane, previousButton, nextButton, pageLabel);
 
         return toolbar;
+    }
+
+    private ComboBox<PrintService> newPrinterComboBox(PrintService selectedService) {
+        ComboBox<PrintService> comboBox = new ComboBox<>(
+                FXCollections.observableArrayList(
+                        F2Runtime.get()
+                                .printerMan()
+                                .printServices()
+                )
+        );
+
+        comboBox.setCellFactory(listView -> new PrintServiceListCell());
+        comboBox.setButtonCell(new PrintServiceListCell());
+        comboBox.setPrefWidth(260.0d);
+
+        selectPrinter(comboBox, selectedService);
+
+        return comboBox;
+    }
+
+    private void selectPrinter(
+            ComboBox<PrintService> comboBox,
+            PrintService selectedService
+    ) {
+        if (selectedService == null)
+            return;
+
+        for (PrintService service : comboBox.getItems()) {
+            if (samePrinter(service, selectedService)) {
+                comboBox.setValue(service);
+                return;
+            }
+        }
+
+        comboBox.setValue(selectedService);
+    }
+
+    private static boolean samePrinter(
+            PrintService left,
+            PrintService right
+    ) {
+        if (left == null || right == null)
+            return false;
+
+        return left.getName().equals(right.getName());
+    }
+
+    private static String printerCaption(PrintService service) {
+        return service == null ? "<no printer>" : service.getName();
     }
 
     private void updatePageControls(
@@ -165,11 +264,43 @@ public class F2FxPreviewManualSmokeApp extends Application {
 
         F2StyledDocument document = new F2PrintService().prepareDocument(text);
 
-        F2PrintPageSetup setup = F2Runtime.get()
+        PrintRequestAttributeSet attributes = F2Runtime.get()
                 .printerMan()
-                .currentPrintPageSetup();
+                .currentPrintSettings()
+                .attributesCopy();
 
-        return new PreviewState(document, setup);
+        PrintService printService = F2Runtime.get()
+                .printerMan()
+                .currentPrintService();
+
+        F2PrintPageSetup setup = resolvePageSetup(
+                printService,
+                attributes
+        );
+
+        return new PreviewState(
+                document,
+                setup,
+                attributes
+        );
+    }
+
+    private F2PrintPageSetup resolvePageSetup(
+            PrintService printService,
+            PrintRequestAttributeSet attributes
+    ) throws Exception {
+        if (printService == null)
+            throw new IllegalStateException("printService is not selected");
+
+        return pageSetupResolver.resolve(
+                new F2PrintSettings(
+                        printService,
+                        attributes
+                ),
+                F2Runtime.get()
+                        .printerMan()
+                        .isMatrixPrinter(printService.getName())
+        );
     }
 
     private static void applyPrintableAreaOverride() {
@@ -201,11 +332,29 @@ public class F2FxPreviewManualSmokeApp extends Application {
 
     private static final class PreviewState {
         private final F2StyledDocument document;
-        private final F2PrintPageSetup pageSetup;
+        private F2PrintPageSetup pageSetup;
+        private final PrintRequestAttributeSet attributes;
 
-        private PreviewState(F2StyledDocument document, F2PrintPageSetup pageSetup) {
+        private PreviewState(
+                F2StyledDocument document,
+                F2PrintPageSetup pageSetup,
+                PrintRequestAttributeSet attributes
+        ) {
             this.document = document;
             this.pageSetup = pageSetup;
+            this.attributes = attributes;
+        }
+    }
+
+    private static final class PrintServiceListCell extends ListCell<PrintService> {
+        @Override
+        protected void updateItem(
+                PrintService item,
+                boolean empty
+        ) {
+            super.updateItem(item, empty);
+
+            setText(empty || item == null ? null : item.getName());
         }
     }
 }
