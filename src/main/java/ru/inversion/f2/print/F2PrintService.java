@@ -111,7 +111,7 @@ public final class F2PrintService {
         );
     }
 
-    private int resolveCopies(PrintRequestAttributeSet attributes) {
+    public static int resolveCopies(PrintRequestAttributeSet attributes) {
         if (attributes == null)
             return 1;
 
@@ -119,5 +119,15 @@ public final class F2PrintService {
                 (Copies) attributes.get(Copies.class);
 
         return copies == null ? 1 : copies.getValue();
+    }
+
+    public static void applyCopies(
+            PrintRequestAttributeSet attributes,
+            int copies
+    ) {
+        if (attributes == null)
+            throw new IllegalArgumentException("attributes is null");
+
+        attributes.add(new Copies(copies));
     }
 }
