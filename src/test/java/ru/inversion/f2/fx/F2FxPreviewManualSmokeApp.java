@@ -8,6 +8,8 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
@@ -74,6 +76,9 @@ public class F2FxPreviewManualSmokeApp extends Application {
 
         ComboBox<PrintService> printerComboBox =
                 newPrinterComboBox(state.pageSetup.printService());
+
+        Spinner<Integer> copiesSpinner =
+                newCopiesSpinner(1);
 
         Label printerLabel = new Label(
                 printerCaption(state.pageSetup.printService())
@@ -143,6 +148,8 @@ public class F2FxPreviewManualSmokeApp extends Application {
                 new Label("Printer:"),
                 printerComboBox,
                 printerLabel,
+                new Label("Copies:"),
+                copiesSpinner,
                 previousButton,
                 pageLabel,
                 nextButton,
@@ -173,6 +180,22 @@ public class F2FxPreviewManualSmokeApp extends Application {
         selectPrinter(comboBox, selectedService);
 
         return comboBox;
+    }
+
+    private Spinner<Integer> newCopiesSpinner(int copies) {
+        Spinner<Integer> spinner = new Spinner<>();
+
+        spinner.setValueFactory(
+                new SpinnerValueFactory.IntegerSpinnerValueFactory(
+                        1,
+                        99,
+                        copies
+                )
+        );
+
+        spinner.setPrefWidth(80.0d);
+
+        return spinner;
     }
 
     private void selectPrinter(
