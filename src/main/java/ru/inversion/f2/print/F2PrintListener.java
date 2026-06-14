@@ -5,14 +5,14 @@ public interface F2PrintListener {
     F2PrintListener NONE = new F2PrintListener() {
     };
 
-    default void onBeginPrint(F2PrintJobInfo jobInfo) {
+    default void onBeginPrint(F2PrintJob printJob) {
     }
 
-    default void onEndPrint(F2PrintJobInfo jobInfo) {
+    default void onEndPrint(F2PrintJob printJob) {
     }
 
     default void onPagePrinted(
-            F2PrintJobInfo jobInfo,
+            F2PrintJob printJob,
             int pageIndex
     ) {
     }
@@ -22,7 +22,7 @@ public interface F2PrintListener {
     }
 
     default void onFinalPrint(
-            F2PrintJobInfo jobInfo,
+            F2PrintJob printJob,
             Exception ex
     ) {
     }
