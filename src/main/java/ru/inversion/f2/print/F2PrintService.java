@@ -5,7 +5,10 @@ import org.slf4j.LoggerFactory;
 import ru.inversion.f2.F2Runtime;
 import ru.inversion.f2.awt.F2AwtPageable;
 import ru.inversion.f2.command.F2CommandRegistry;
-import ru.inversion.f2.prepared.*;
+import ru.inversion.f2.prepared.F2PreparedDocument;
+import ru.inversion.f2.prepared.F2PreparedDocumentParser;
+import ru.inversion.f2.prepared.F2PreparedTextInterpreter;
+import ru.inversion.f2.prepared.F2StyledDocument;
 import ru.inversion.utils.Checks;
 
 import javax.print.attribute.PrintRequestAttributeSet;
@@ -15,103 +18,120 @@ import java.lang.invoke.MethodHandles;
 
 public final class F2PrintService {
 
-    private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+    private static final Logger log =
+            LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-    private final F2PreparedDocumentParser preparedDocumentParser = new F2PreparedDocumentParser();
+    private final F2PreparedDocumentParser preparedDocumentParser =
+            new F2PreparedDocumentParser();
 
-    private final F2PreparedTextInterpreter preparedTextInterpreter = new F2PreparedTextInterpreter();
+    private final F2PreparedTextInterpreter preparedTextInterpreter =
+            new F2PreparedTextInterpreter();
 
     /** */
-    public F2StyledDocument prepareDocument( String text)
+    public F2StyledDocument prepareDocument(String text)
     {
-        Checks.Require.text( text, "text" );
+        Checks.Require.text(text, "text");
 
-        F2CommandRegistry  registry = F2Runtime.get().commandRegistry();
+        F2CommandRegistry registry =
+                F2Runtime.get().commandRegistry();
 
-        F2PreparedDocument prepared = preparedDocumentParser.parse(text, registry);
+        F2PreparedDocument prepared =
+                preparedDocumentParser.parse(text, registry);
 
-        log.info ( "F2 prepared content mode: {}", prepared.contentMode() );
+        log.info("F2 prepared content mode: {}", prepared.contentMode());
 
-        return preparedTextInterpreter.interpret( prepared.tokens(), registry );
+        return preparedTextInterpreter.interpret(
+                prepared.tokens(),
+                registry
+        );
     }
 
     /** */
-    public F2PrintResult printDocument(
-            F2StyledDocument document,
-            F2PrintPageSetup setup,
-            F2PrintListener listener
-    ) throws Exception {
+    public F2PrintResult print(F2PrintJob printJob) throws Exception {
 
-        Checks.Require.object(document, "document");
-        Checks.Require.object(setup, "setup");
+        Checks.Require.object(printJob, "printJob");
 
-        F2PrintListener safeListener = listener == null ? F2PrintListener.NONE : listener;
-
-        if (setup.matrixPrinter()) {
+        if (printJob.matrixPrinter()) {
             throw new UnsupportedOperationException(
                     "CodeText / ESC print path is not implemented yet"
             );
         }
 
-        PrintRequestAttributeSet attributes = setup.attributesCopy();
-        int copies = resolveCopies(attributes);
+        /*
+         * Все динамические параметры фиксируются до начала lifecycle.
+         * copiesSupplier вызывается здесь ровно один раз.
+         */
+        F2PrintJob resolvedPrintJob =
+                printJob.resolveCopies();
 
-        String driverRef = F2Runtime.get()
-                .printerMan()
-                .driverRef(setup.printService().getName());
+        int copies =
+                resolvedPrintJob.resolvedCopies();
 
-        F2PrintJobInfo jobInfo = new F2PrintJobInfo(
-                setup,
-                driverRef,
-                document.pageCount(),
-                copies
+        F2PrintPageSetup setup =
+                resolvedPrintJob.pageSetup();
+
+        PrintRequestAttributeSet attributes =
+                setup.attributesCopy();
+
+        attributes.add(
+                new Copies(copies)
         );
 
-        PrinterJob job = PrinterJob.getPrinterJob();
+        PrinterJob job =
+                PrinterJob.getPrinterJob();
 
         job.setPrintService(
-            setup.printService()
+                setup.printService()
         );
 
         job.setJobName("F2 report");
 
         job.setPageable(
-                new F2AwtPageable(
-                        document,
-                        setup,
-                        jobInfo,
-                        safeListener
-                )
+                new F2AwtPageable(resolvedPrintJob)
         );
+
+        F2PrintListener listener =
+                resolvedPrintJob.listener();
 
         Exception finalError = null;
 
         try {
-            safeListener.onBeginPrint(jobInfo);
+            listener.onCopiesResolved(
+                    resolvedPrintJob,
+                    copies
+            );
+
+            listener.onBeginPrint(
+                    resolvedPrintJob
+            );
 
             job.print(attributes);
 
-            safeListener.onEndPrint(jobInfo);
+            listener.onEndPrint(
+                    resolvedPrintJob
+            );
+
+            return new F2PrintResult(
+                    resolvedPrintJob.printerName(),
+                    resolvedPrintJob.driverRef(),
+                    resolvedPrintJob.pageCount()
+            );
         }
         catch (Exception ex) {
             finalError = ex;
             throw ex;
         }
         finally {
-            safeListener.onFinalPrint(
-                    jobInfo,
+            listener.onFinalPrint(
+                    resolvedPrintJob,
                     finalError
             );
         }
-
-        return new F2PrintResult(
-                setup.printService().getName(),
-                jobInfo.driverRef(),
-                document.pageCount()
-        );
     }
 
-    public static int resolveCopies(PrintRequestAttributeSet attributes) {
+    public static int resolveCopies(
+            PrintRequestAttributeSet attributes
+    ) {
         if (attributes == null)
             return 1;
 
@@ -119,15 +139,5 @@ public final class F2PrintService {
                 (Copies) attributes.get(Copies.class);
 
         return copies == null ? 1 : copies.getValue();
-    }
-
-    public static void applyCopies(
-            PrintRequestAttributeSet attributes,
-            int copies
-    ) {
-        if (attributes == null)
-            throw new IllegalArgumentException("attributes is null");
-
-        attributes.add(new Copies(copies));
     }
 }

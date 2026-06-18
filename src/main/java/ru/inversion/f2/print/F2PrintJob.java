@@ -10,6 +10,7 @@ public final class F2PrintJob {
     private final F2PrintPageSetup pageSetup;
     private final String driverRef;
     private final IntSupplier copiesSupplier;
+    private final Integer resolvedCopies;
     private final F2PrintListener listener;
 
     public F2PrintJob(
@@ -17,6 +18,24 @@ public final class F2PrintJob {
             F2PrintPageSetup pageSetup,
             String driverRef,
             IntSupplier copiesSupplier,
+            F2PrintListener listener
+    ) {
+        this(
+                document,
+                pageSetup,
+                driverRef,
+                copiesSupplier,
+                null,
+                listener
+        );
+    }
+
+    private F2PrintJob(
+            F2StyledDocument document,
+            F2PrintPageSetup pageSetup,
+            String driverRef,
+            IntSupplier copiesSupplier,
+            Integer resolvedCopies,
             F2PrintListener listener
     ) {
         if (document == null)
@@ -28,8 +47,72 @@ public final class F2PrintJob {
         this.document = document;
         this.pageSetup = pageSetup;
         this.driverRef = driverRef;
-        this.copiesSupplier = copiesSupplier == null ? () -> 1 : copiesSupplier;
-        this.listener = listener == null ? F2PrintListener.NONE : listener;
+        this.copiesSupplier =
+                copiesSupplier == null
+                        ? () -> 1
+                        : copiesSupplier;
+
+        this.resolvedCopies = resolvedCopies;
+        this.listener =
+                listener == null
+                        ? F2PrintListener.NONE
+                        : listener;
+    }
+
+    /**
+     * Фиксирует динамическое количество копий.
+     *
+     * Supplier вызывается ровно один раз.
+     */
+    public F2PrintJob resolveCopies() {
+        if (isCopiesResolved())
+            return this;
+
+        return withFixedCopies(
+                copiesSupplier.getAsInt()
+        );
+    }
+
+    public F2PrintJob withFixedCopies(int copies) {
+        int safeCopies = normalizeCopies(copies);
+
+        return new F2PrintJob(
+                document,
+                pageSetup,
+                driverRef,
+                () -> safeCopies,
+                Integer.valueOf(safeCopies),
+                listener
+        );
+    }
+
+    public boolean isCopiesResolved() {
+        return resolvedCopies != null;
+    }
+
+    /**
+     * До resolveCopies() возвращает текущее значение Supplier.
+     * После resolveCopies() возвращает зафиксированное значение.
+     */
+    public int copies() {
+        if (resolvedCopies != null)
+            return resolvedCopies.intValue();
+
+        return normalizeCopies(
+                copiesSupplier.getAsInt()
+        );
+    }
+
+    /**
+     * Разрешено вызывать только после resolveCopies().
+     */
+    public int resolvedCopies() {
+        if (resolvedCopies == null)
+            throw new IllegalStateException(
+                    "copies are not resolved"
+            );
+
+        return resolvedCopies.intValue();
     }
 
     public F2StyledDocument document() {
@@ -52,11 +135,6 @@ public final class F2PrintJob {
         return document.pageCount();
     }
 
-    public int copies() {
-        int copies = copiesSupplier.getAsInt();
-        return copies <= 0 ? 1 : copies;
-    }
-
     public boolean matrixPrinter() {
         return pageSetup.matrixPrinter();
     }
@@ -69,13 +147,22 @@ public final class F2PrintJob {
         return pageSetup.geometryToString();
     }
 
+    private static int normalizeCopies(int copies) {
+        return copies <= 0 ? 1 : copies;
+    }
+
     @Override
     public String toString() {
+        Object copiesText =
+                resolvedCopies == null
+                        ? "<dynamic>"
+                        : resolvedCopies;
+
         return "F2PrintJob{"
                 + "printerName='" + printerName() + '\''
                 + ", driverRef='" + driverRef + '\''
                 + ", pageCount=" + pageCount()
-                + ", copies=" + copies()
+                + ", copies=" + copiesText
                 + ", matrixPrinter=" + matrixPrinter()
                 + ", pageSetup=" + pageSetup.geometryToString()
                 + '}';

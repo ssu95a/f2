@@ -2,7 +2,7 @@ package ru.inversion.f2.awt;
 
 import ru.inversion.f2.prepared.F2StyledDocument;
 import ru.inversion.f2.prepared.F2StyledPage;
-import ru.inversion.f2.print.F2PrintJobInfo;
+import ru.inversion.f2.print.F2PrintJob;
 import ru.inversion.f2.print.F2PrintListener;
 
 import java.awt.Graphics;
@@ -14,11 +14,9 @@ import java.awt.print.Printable;
 public final class F2AwtDocumentPrintable implements Printable {
 
     private final F2StyledDocument document;
-
     private final F2AwtPagePainter painter;
-
-    private final F2PrintJobInfo   jobInfo;
-    private final F2PrintListener  listener;
+    private final F2PrintJob printJob;
+    private final F2PrintListener listener;
 
     public F2AwtDocumentPrintable(
             F2StyledDocument document
@@ -45,23 +43,29 @@ public final class F2AwtDocumentPrintable implements Printable {
     }
 
     /** */
-    public F2AwtDocumentPrintable(
-            F2StyledDocument document,
-            F2PrintJobInfo jobInfo,
-            F2PrintListener listener
-    ) {
+    public F2AwtDocumentPrintable(F2PrintJob printJob) {
         this(
-                document,
-                jobInfo,
-                listener,
+                printJob,
                 new F2AwtPagePainter()
         );
     }
 
     /** */
     public F2AwtDocumentPrintable(
+            F2PrintJob printJob,
+            F2AwtPagePainter painter
+    ) {
+        this(
+                printJob.document(),
+                printJob,
+                printJob.listener(),
+                painter
+        );
+    }
+
+    private F2AwtDocumentPrintable(
             F2StyledDocument document,
-            F2PrintJobInfo jobInfo,
+            F2PrintJob printJob,
             F2PrintListener listener,
             F2AwtPagePainter painter
     ) {
@@ -72,7 +76,7 @@ public final class F2AwtDocumentPrintable implements Printable {
             throw new IllegalArgumentException("painter is null");
 
         this.document = document;
-        this.jobInfo = jobInfo;
+        this.printJob = printJob;
         this.listener = listener == null ? F2PrintListener.NONE : listener;
         this.painter = painter;
     }
@@ -98,7 +102,7 @@ public final class F2AwtDocumentPrintable implements Printable {
         painter.paint((Graphics2D) graphics, page, config);
 
         listener.onPagePrinted(
-                jobInfo,
+                printJob,
                 pageIndex
         );
 
