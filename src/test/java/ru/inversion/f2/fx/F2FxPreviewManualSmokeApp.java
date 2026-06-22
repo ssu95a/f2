@@ -16,6 +16,7 @@ import javafx.stage.Stage;
 import ru.inversion.f2.F2Runtime;
 import ru.inversion.f2.ini.F2AltIniModelLoader;
 import ru.inversion.f2.prepared.F2StyledDocument;
+import ru.inversion.f2.print.F2PrintJob;
 import ru.inversion.f2.print.F2PrintListener;
 import ru.inversion.f2.print.F2PrintPageSetup;
 import ru.inversion.f2.print.F2PrintPageSetupResolver;
@@ -42,11 +43,12 @@ public class F2FxPreviewManualSmokeApp extends Application {
     private static final String DEFAULT_PRINTER_NAME =
             "Microsoft Print to PDF";
 
-    private final F2PrintPageSetupResolver pageSetupResolver = new F2PrintPageSetupResolver();
+    private final F2PrintPageSetupResolver pageSetupResolver =
+            new F2PrintPageSetupResolver();
 
-    public static void main(String[] args) {
-        launch(args);
-    }
+//    public static void main(String[] args) {
+//        launch(args);
+//    }
 
     @Override
     public void start(Stage stage) throws Exception {
@@ -56,7 +58,6 @@ public class F2FxPreviewManualSmokeApp extends Application {
             state.document,
             state.pageSetup
         );
-
 
         previewPane.setDpi(doubleProperty("f2.preview.smoke.dpi", 144.0d));
         previewPane.setDebugOverlay(true);
@@ -85,67 +86,97 @@ public class F2FxPreviewManualSmokeApp extends Application {
         );
 
         printerComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue == null)
-                return;
-
-            try {
-                F2PrintPageSetup newPageSetup =
-                        resolvePageSetup(
-                                newValue,
-                                state.attributes
-                        );
-
-                state.pageSetup = newPageSetup;
-                previewPane.setPageSetup(newPageSetup);
-                printerLabel.setText(printerCaption(newValue));
-            }
-            catch (Exception ex) {
-                ex.printStackTrace();
-
-                if (oldValue != null)
-                    printerComboBox.setValue(oldValue);
-            }
         });
 
         copiesSpinner.valueProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue == null)
                 return;
 
-            try {
-                state.copyCount = newValue.intValue();
-                F2PrintService.applyCopies(state.attributes, state.copyCount);
-
-                F2PrintPageSetup newPageSetup =
-                        resolvePageSetup(
-                                printerComboBox.getValue(),
-                                state.attributes
-                        );
-
-                state.pageSetup = newPageSetup;
-                previewPane.setPageSetup(newPageSetup);
-            }
-            catch (Exception ex) {
-                ex.printStackTrace();
-
-                if (oldValue != null)
-                    copiesSpinner.getValueFactory().setValue(oldValue);
-            }
+            state.copyCount = newValue.intValue();
         });
 
         Button printButton = new Button("Print");
 
         printButton.setOnAction(event -> {
-            try {
-                new F2PrintService().printDocument(
-                        previewPane.document(),
-                        previewPane.pageSetup(),
-                        F2PrintListener.NONE
+            F2PrintPageSetup pageSetup =
+                    previewPane.pageSetup();
+
+            String driverRef =
+                    F2Runtime.get()
+                            .printerMan()
+                            .driverRef(
+                                    pageSetup
+                                            .printService()
+                                            .getName()
+                            );
+
+            F2PrintJob printJob =
+                    new F2PrintJob(
+                            previewPane.document(),
+                            pageSetup,
+                            driverRef,
+                            () -> state.copyCount,
+                            F2PrintListener.NONE
+                    );
+
+            F2FxPrintTask printTask =
+                    new F2FxPrintTask(printJob);
+
+            Window owner =
+                    printButton
+                            .getScene()
+                            .getWindow();
+
+            F2FxPrintProgressDialog progressDialog =
+                    new F2FxPrintProgressDialog(
+                            owner,
+                            printTask
+                    );
+
+            printButton.setDisable(true);
+            printerComboBox.setDisable(true);
+            copiesSpinner.setDisable(true);
+
+            Runnable enableControls = () -> {
+                printButton.setDisable(false);
+                printerComboBox.setDisable(false);
+                copiesSpinner.setDisable(false);
+            };
+
+            printTask.setOnSucceeded(taskEvent -> {
+                enableControls.run();
+                System.out.println(
+                        printTask.getValue()
                 );
-            }
-            catch (Exception ex) {
-                ex.printStackTrace();
-            }
+            });
+
+            printTask.setOnFailed(taskEvent -> {
+                enableControls.run();
+
+                Throwable ex =
+                        printTask.getException();
+
+                if (ex != null)
+                    ex.printStackTrace();
+            });
+
+            printTask.setOnCancelled(taskEvent -> {
+                enableControls.run();
+                System.out.println("F2 print cancelled");
+            });
+
+            progressDialog.show();
+
+            Thread thread =
+                    new Thread(
+                            printTask,
+                            "f2-print"
+                    );
+
+            thread.setDaemon(true);
+            thread.start();
         });
+
 
         Button previousButton = new Button("<");
         Button nextButton = new Button(">");
@@ -223,6 +254,15 @@ public class F2FxPreviewManualSmokeApp extends Application {
         return spinner;
     }
 
+    private String driverRef(F2PrintPageSetup pageSetup) {
+        if (pageSetup == null)
+            return null;
+
+        return F2Runtime.get()
+                .printerMan()
+                .driverRef(pageSetup.printService().getName());
+    }
+
     private void selectPrinter(
             ComboBox<PrintService> comboBox,
             PrintService selectedService
@@ -269,144 +309,134 @@ public class F2FxPreviewManualSmokeApp extends Application {
         nextButton.setDisable(previewPane.pageIndex() + 1 >= previewPane.pageCount());
     }
 
-    private PreviewState preparePreview() throws Exception {
-        Path inputPath = Paths.get(stringProperty(
-                "f2.preview.smoke.input",
-                DEFAULT_INPUT_FILE
-        ));
+private PreviewState preparePreview() throws Exception {
+    Path inputPath = Paths.get(stringProperty(
+            "f2.preview.smoke.input",
+            DEFAULT_INPUT_FILE
+    ));
 
-        Path iniPath = Paths.get(stringProperty(
-                "f2.preview.smoke.ini",
-                DEFAULT_INI_FILE
-        ));
+    Path iniPath = Paths.get(stringProperty(
+            "f2.preview.smoke.ini",
+            DEFAULT_INI_FILE
+    ));
 
-        Charset textCharset = Charset.forName(stringProperty(
-                "f2.preview.smoke.charset",
-                "windows-1251"
-        ));
+    Charset textCharset = Charset.forName(stringProperty(
+            "f2.preview.smoke.charset",
+            "windows-1251"
+    ));
 
-        Charset iniCharset = Charset.forName(stringProperty(
-                "f2.preview.smoke.ini.charset",
-                "windows-1251"
-        ));
+    Charset iniCharset = Charset.forName(stringProperty(
+            "f2.preview.smoke.ini.charset",
+            "windows-1251"
+    ));
 
-        F2Runtime.init(new F2AltIniModelLoader().load(iniPath, iniCharset));
+    F2Runtime.init(new F2AltIniModelLoader().load(iniPath, iniCharset));
 
-        String printerName = stringProperty(
-                "f2.preview.smoke.printer",
-                DEFAULT_PRINTER_NAME
-        );
+    String printerName = stringProperty(
+            "f2.preview.smoke.printer",
+            DEFAULT_PRINTER_NAME
+    );
 
-        if (printerName != null && printerName.trim().length() > 0) {
-            F2Runtime.get()
-                    .printerMan()
-                    .selectPrinterName(printerName.trim());
-        }
-
-        applyPrintableAreaOverride();
-
-        String text = new String(
-                Files.readAllBytes(inputPath),
-                textCharset
-        );
-
-        F2StyledDocument document = new F2PrintService().prepareDocument(text);
-
-        PrintRequestAttributeSet attributes = F2Runtime.get()
-                .printerMan()
-                .currentPrintSettings()
-                .attributesCopy();
-
-        PrintService printService = F2Runtime.get()
-                .printerMan()
-                .currentPrintService();
-
-        F2PrintPageSetup setup = resolvePageSetup(
-                printService,
-                attributes
-        );
-
-        return new PreviewState(
-                document,
-                setup,
-                attributes,
-                F2PrintService.resolveCopies(attributes)
-        );
-    }
-
-    private F2PrintPageSetup resolvePageSetup(
-            PrintService printService,
-            PrintRequestAttributeSet attributes
-    ) throws Exception {
-        if (printService == null)
-            throw new IllegalStateException("printService is not selected");
-
-        return pageSetupResolver.resolve(
-                new F2PrintSettings(
-                        printService,
-                        attributes
-                ),
-                F2Runtime.get()
-                        .printerMan()
-                        .isMatrixPrinter(printService.getName())
-        );
-    }
-
-    private static void applyPrintableAreaOverride() {
-        HashPrintRequestAttributeSet attributes = new HashPrintRequestAttributeSet();
-        attributes.add(new MediaPrintableArea(5.0f, 5.0f, 200.0f, 287.0f, MediaPrintableArea.MM));
-
+    if (printerName != null && printerName.trim().length() > 0) {
         F2Runtime.get()
                 .printerMan()
-                .selectPrintAttributes(attributes);
+                .selectPrinterName(printerName.trim());
     }
 
-    private static String stringProperty(String name, String defaultValue) {
-        String value = System.getProperty(name);
+    applyPrintableAreaOverride();
 
-        if (value == null || value.trim().length() == 0)
-            return defaultValue;
+    String text = new String(
+            Files.readAllBytes(inputPath),
+            textCharset
+    );
 
-        return value;
+    F2StyledDocument document =
+            new F2PrintService().prepareDocument(text);
+
+    PrintRequestAttributeSet attributes = F2Runtime.get()
+            .printerMan()
+            .currentPrintSettings()
+            .attributesCopy();
+
+    PrintService printService = F2Runtime.get()
+            .printerMan()
+            .currentPrintService();
+
+
+    return new PreviewState(
+            document,
+            setup,
+            attributes,
+            F2PrintService.resolveCopies(attributes)
+    );
+}
+
+
+private static void applyPrintableAreaOverride() {
+    HashPrintRequestAttributeSet attributes =
+            new HashPrintRequestAttributeSet();
+
+    attributes.add(
+            new MediaPrintableArea(
+                    5.0f,
+                    5.0f,
+                    200.0f,
+                    287.0f,
+                    MediaPrintableArea.MM
+            )
+    );
+
+    F2Runtime.get()
+            .printerMan()
+            .selectPrintAttributes(attributes);
+}
+
+private static String stringProperty(String name, String defaultValue) {
+    String value = System.getProperty(name);
+
+    if (value == null || value.trim().length() == 0)
+        return defaultValue;
+
+    return value;
+}
+
+private static double doubleProperty(String name, double defaultValue) {
+    String value = System.getProperty(name);
+
+    if (value == null || value.trim().length() == 0)
+        return defaultValue;
+
+    return Double.parseDouble(value.trim());
+}
+
+private static final class PreviewState {
+    private final F2StyledDocument document;
+    private F2PrintPageSetup pageSetup;
+    private final PrintRequestAttributeSet attributes;
+    private int copyCount;
+
+    private PreviewState(
+            F2StyledDocument document,
+            F2PrintPageSetup pageSetup,
+            PrintRequestAttributeSet attributes,
+            int copyCount
+    ) {
+        this.document = document;
+        this.pageSetup = pageSetup;
+        this.attributes = attributes;
+        this.copyCount = copyCount;
     }
+}
 
-    private static double doubleProperty(String name, double defaultValue) {
-        String value = System.getProperty(name);
+private static final class PrintServiceListCell extends ListCell<PrintService> {
+    @Override
+    protected void updateItem(
+            PrintService item,
+            boolean empty
+    ) {
+        super.updateItem(item, empty);
 
-        if (value == null || value.trim().length() == 0)
-            return defaultValue;
-
-        return Double.parseDouble(value.trim());
+        setText(empty || item == null ? null : item.getName());
     }
-
-    private static final class PreviewState {
-        private final F2StyledDocument document;
-        private F2PrintPageSetup pageSetup;
-        private final PrintRequestAttributeSet attributes;
-        private int copyCount;
-
-        private PreviewState(
-                F2StyledDocument document,
-                F2PrintPageSetup pageSetup,
-                PrintRequestAttributeSet attributes,
-                int copyCount
-        ) {
-            this.document = document;
-            this.pageSetup = pageSetup;
-            this.attributes = attributes;
-            this.copyCount = copyCount;
-        }
-    }
-
-    private static final class PrintServiceListCell extends ListCell<PrintService> {
-        @Override
-        protected void updateItem(
-                PrintService item,
-                boolean empty
-        ) {
-            super.updateItem(item, empty);
-
-            setText(empty || item == null ? null : item.getName());
-        }
-    }
+}
 }
