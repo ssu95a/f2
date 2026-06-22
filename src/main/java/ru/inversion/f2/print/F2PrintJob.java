@@ -111,11 +111,25 @@ public final class F2PrintJob {
         int safeCopies = normalizeCopies(copies);
 
         return new F2PrintJob(
+            document,
+            pageSetup,
+            driverRef,
+            () -> safeCopies,
+            Integer.valueOf(safeCopies),
+            listener,
+            cancellation
+        );
+    }
+
+    public F2PrintJob withListener(
+            F2PrintListener listener
+    ) {
+        return new F2PrintJob(
                 document,
                 pageSetup,
                 driverRef,
-                () -> safeCopies,
-                Integer.valueOf(safeCopies),
+                copiesSupplier,
+                resolvedCopies,
                 listener,
                 cancellation
         );

@@ -1,48 +1,45 @@
 package ru.inversion.f2.fx;
 
 import javafx.concurrent.Task;
-import ru.inversion.f2.print.F2PrintExecutor;
+import javafx.concurrent.Worker;
 import ru.inversion.f2.print.F2PrintJob;
-import ru.inversion.f2.print.F2PrintJobs;
 import ru.inversion.f2.print.F2PrintListener;
 import ru.inversion.f2.print.F2PrintResult;
 import ru.inversion.f2.print.F2PrintService;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 public final class F2FxPrintTask
         extends Task<F2PrintResult>
         implements F2PrintListener {
 
-    private final F2PrintExecutor printExecutor;
+    private final F2PrintService printService;
     private final F2PrintJob printJob;
     private final F2PrintListener delegate;
-    private final AtomicInteger completedPages =
-            new AtomicInteger();
 
     public F2FxPrintTask(F2PrintJob printJob) {
         this(
-                new F2PrintService()::print,
+                new F2PrintService(),
                 printJob
         );
     }
 
     F2FxPrintTask(
-            F2PrintExecutor printExecutor,
+            F2PrintService printService,
             F2PrintJob sourcePrintJob
     ) {
-        if (printExecutor == null)
-            throw new IllegalArgumentException("printExecutor is null");
+        if (printService == null)
+            throw new IllegalArgumentException("printService is null");
 
         if (sourcePrintJob == null)
             throw new IllegalArgumentException("sourcePrintJob is null");
 
-        this.printExecutor = printExecutor;
+        this.printService = printService;
         this.delegate = sourcePrintJob.listener();
-        this.printJob = F2PrintJobs.withListener(
-                sourcePrintJob,
-                this
-        );
+        this.printJob = sourcePrintJob.withListener(this);
+
+        stateProperty().addListener((observable, oldState, newState) -> {
+            if (newState == Worker.State.CANCELLED)
+                this.printJob.cancel();
+        });
     }
 
     @Override
@@ -51,25 +48,7 @@ public final class F2FxPrintTask
         updateMessage("Подготовка задания печати");
         updateProgress(0, pageCount());
 
-        try {
-            F2PrintResult result =
-                    printExecutor.print(printJob);
-
-            if (printJob.isCancelled()) {
-                cancel(false);
-                return null;
-            }
-
-            return result;
-        }
-        catch (Exception ex) {
-            if (printJob.isCancelled()) {
-                cancel(false);
-                return null;
-            }
-
-            throw ex;
-        }
+        return printService.print(printJob);
     }
 
     public void cancelPrint() {
@@ -99,7 +78,6 @@ public final class F2FxPrintTask
 
     @Override
     public void onBeginPrint(F2PrintJob printJob) {
-        completedPages.set(0);
         updateMessage("Начало печати");
         updateProgress(0, pageCount());
 
@@ -111,25 +89,21 @@ public final class F2FxPrintTask
             F2PrintJob printJob,
             int pageIndex
     ) {
-        int completed = completedPages.accumulateAndGet(
-                pageIndex + 1,
-                Math::max
-        );
-
-        completed = Math.min(
-                completed,
-                pageCount()
-        );
+        int completedPages =
+                Math.min(
+                        pageIndex + 1,
+                        pageCount()
+                );
 
         updateMessage(
                 "Передача страницы "
-                        + completed
+                        + completedPages
                         + " / "
                         + pageCount()
         );
 
         updateProgress(
-                completed,
+                completedPages,
                 pageCount()
         );
 
@@ -154,20 +128,11 @@ public final class F2FxPrintTask
     }
 
     @Override
-    public boolean isCancelled() {
-        return printJob.isCancelled()
-                || super.isCancelled();
-    }
-
-    @Override
     public void onFinalPrint(
             F2PrintJob printJob,
             Exception ex
     ) {
-        if (printJob.isCancelled()) {
-            updateMessage("Печать отменена");
-        }
-        else {
+        if (!isCancelled()) {
             updateMessage(
                     ex == null
                             ? "Печать завершена"
