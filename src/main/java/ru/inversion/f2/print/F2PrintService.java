@@ -77,25 +77,16 @@ public final class F2PrintService {
                 new Copies(copies)
         );
 
-        PrinterJob job =
+        PrinterJob awtJob =
                 PrinterJob.getPrinterJob();
 
-        resolvedPrintJob.cancellation().bind(awtJob);
-
-        try {
-            awtJob.print(attributes);
-        }
-        finally {
-            resolvedPrintJob.cancellation().unbind(awtJob);
-        }
-
-        job.setPrintService(
+        awtJob.setPrintService(
                 setup.printService()
         );
 
-        job.setJobName("F2 report");
+        awtJob.setJobName("F2 report");
 
-        job.setPageable(
+        awtJob.setPageable(
                 new F2AwtPageable(resolvedPrintJob)
         );
 
@@ -114,7 +105,9 @@ public final class F2PrintService {
                     resolvedPrintJob
             );
 
-            job.print(attributes);
+            resolvedPrintJob.cancellation().bind(awtJob);
+
+            awtJob.print(attributes);
 
             listener.onEndPrint(
                     resolvedPrintJob
@@ -131,13 +124,14 @@ public final class F2PrintService {
             throw ex;
         }
         finally {
+            resolvedPrintJob.cancellation().unbind(awtJob);
+
             listener.onFinalPrint(
                     resolvedPrintJob,
                     finalError
             );
         }
     }
-
     public static int resolveCopies(
             PrintRequestAttributeSet attributes
     ) {

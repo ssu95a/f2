@@ -19,6 +19,23 @@ public final class F2PrintJob {
             F2PrintPageSetup pageSetup,
             String driverRef,
             IntSupplier copiesSupplier,
+            F2PrintListener listener
+    ) {
+        this(
+                document,
+                pageSetup,
+                driverRef,
+                copiesSupplier,
+                listener,
+                new F2PrintCancellation()
+        );
+    }
+
+    public F2PrintJob(
+            F2StyledDocument document,
+            F2PrintPageSetup pageSetup,
+            String driverRef,
+            IntSupplier copiesSupplier,
             F2PrintListener listener,
             F2PrintCancellation cancellation
     ) {
@@ -28,7 +45,8 @@ public final class F2PrintJob {
                 driverRef,
                 copiesSupplier,
                 null,
-                listener, cancellation
+                listener,
+                cancellation
         );
     }
 
@@ -38,10 +56,10 @@ public final class F2PrintJob {
             String driverRef,
             IntSupplier copiesSupplier,
             Integer resolvedCopies,
-            F2PrintListener listener, F2PrintCancellation cancellation
+            F2PrintListener listener,
+            F2PrintCancellation cancellation
     ) {
-        this.cancellation = cancellation;
-        if (document == null)
+        if( document == null )
             throw new IllegalArgumentException("document is null");
 
         if (pageSetup == null)
@@ -60,6 +78,11 @@ public final class F2PrintJob {
                 listener == null
                         ? F2PrintListener.NONE
                         : listener;
+
+        this.cancellation =
+                cancellation == null
+                        ? new F2PrintCancellation()
+                        : cancellation;
     }
 
     public boolean isCancelled() {
@@ -94,7 +117,12 @@ public final class F2PrintJob {
                 () -> safeCopies,
                 Integer.valueOf(safeCopies),
                 listener,
+                cancellation
         );
+    }
+
+    F2PrintCancellation cancellation() {
+        return cancellation;
     }
 
     public boolean isCopiesResolved() {
