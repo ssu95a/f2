@@ -2,6 +2,7 @@ package ru.inversion.f2.fx;
 
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import ru.inversion.f2.prepared.F2StyledDocument;
@@ -11,7 +12,9 @@ import ru.inversion.f2.print.*;
 import javax.print.PrintService;
 import java.awt.print.PageFormat;
 import java.util.Collections;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -22,11 +25,16 @@ public class F2FxPrintTaskTest {
     private static final long T = 10L;
 
     @BeforeClass
-    public static void fx() throws Exception {
+    public static void startFx() throws Exception {
         CountDownLatch l = new CountDownLatch(1);
         try { Platform.startup(l::countDown); }
         catch (IllegalStateException ex) { Platform.runLater(l::countDown); }
         assertTrue(l.await(T, TimeUnit.SECONDS));
+    }
+
+    @AfterClass
+    public static void stopFx() {
+        Platform.exit();
     }
 
     @Test
@@ -43,8 +51,8 @@ public class F2FxPrintTaskTest {
         }, job());
 
         assertEquals(Worker.State.SUCCEEDED, run(task));
-        assertEquals(1.0d, task.getProgress(), 0.000001d);
-        assertEquals(1, task.getValue().pageCount());
+        assertEquals(1.0d, onFx(task::getProgress), 0.000001d);
+        assertEquals(1, onFx(task::getValue).pageCount());
     }
 
     @Test
@@ -91,6 +99,12 @@ public class F2FxPrintTaskTest {
         thread.setDaemon(true);
         thread.start();
         return done;
+    }
+
+    private static <T> T onFx(Callable<T> callable) throws Exception {
+        FutureTask<T> future = new FutureTask<>(callable);
+        Platform.runLater(future);
+        return future.get(T, TimeUnit.SECONDS);
     }
 
     private static F2PrintJob job() {
