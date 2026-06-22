@@ -9,6 +9,9 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /** */
 public final class F2AwtDocumentPrintable implements Printable {
@@ -62,6 +65,8 @@ public final class F2AwtDocumentPrintable implements Printable {
                 painter
         );
     }
+    private final Set<Integer> notifiedPages =
+            Collections.synchronizedSet(new HashSet<>());
 
     private F2AwtDocumentPrintable(
             F2StyledDocument document,
@@ -84,7 +89,7 @@ public final class F2AwtDocumentPrintable implements Printable {
     @Override
     public int print( Graphics graphics, PageFormat pageFormat, int pageIndex )
     {
-        if (listener.isCancelled())
+        if (printJob != null && printJob.isCancelled())
             return NO_SUCH_PAGE;
 
         if (pageIndex < 0 || pageIndex >= document.pageCount())
@@ -101,10 +106,12 @@ public final class F2AwtDocumentPrintable implements Printable {
 
         painter.paint((Graphics2D) graphics, page, config);
 
-        listener.onPagePrinted(
-                printJob,
-                pageIndex
-        );
+        if (notifiedPages.add(pageIndex)) {
+            listener.onPagePrinted(
+                    printJob,
+                    pageIndex
+            );
+        }
 
         return PAGE_EXISTS;
     }

@@ -12,8 +12,8 @@ public interface F2PrintListener {
     default void onCopiesResolved(
             F2PrintJob printJob,
             int copies
-    ) {
-    }
+    )
+    { }
 
     /**
      * Начинается передача задания в PrinterJob.

@@ -12,13 +12,15 @@ public final class F2PrintJob {
     private final IntSupplier copiesSupplier;
     private final Integer resolvedCopies;
     private final F2PrintListener listener;
+    private final F2PrintCancellation cancellation;
 
     public F2PrintJob(
             F2StyledDocument document,
             F2PrintPageSetup pageSetup,
             String driverRef,
             IntSupplier copiesSupplier,
-            F2PrintListener listener
+            F2PrintListener listener,
+            F2PrintCancellation cancellation
     ) {
         this(
                 document,
@@ -26,7 +28,7 @@ public final class F2PrintJob {
                 driverRef,
                 copiesSupplier,
                 null,
-                listener
+                listener, cancellation
         );
     }
 
@@ -36,8 +38,9 @@ public final class F2PrintJob {
             String driverRef,
             IntSupplier copiesSupplier,
             Integer resolvedCopies,
-            F2PrintListener listener
+            F2PrintListener listener, F2PrintCancellation cancellation
     ) {
+        this.cancellation = cancellation;
         if (document == null)
             throw new IllegalArgumentException("document is null");
 
@@ -57,6 +60,14 @@ public final class F2PrintJob {
                 listener == null
                         ? F2PrintListener.NONE
                         : listener;
+    }
+
+    public boolean isCancelled() {
+        return cancellation.isCancelled();
+    }
+
+    public void cancel() {
+        cancellation.cancel();
     }
 
     /**
@@ -82,7 +93,7 @@ public final class F2PrintJob {
                 driverRef,
                 () -> safeCopies,
                 Integer.valueOf(safeCopies),
-                listener
+                listener,
         );
     }
 

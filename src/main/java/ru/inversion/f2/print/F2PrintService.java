@@ -80,6 +80,15 @@ public final class F2PrintService {
         PrinterJob job =
                 PrinterJob.getPrinterJob();
 
+        resolvedPrintJob.cancellation().bind(awtJob);
+
+        try {
+            awtJob.print(attributes);
+        }
+        finally {
+            resolvedPrintJob.cancellation().unbind(awtJob);
+        }
+
         job.setPrintService(
                 setup.printService()
         );
