@@ -3,95 +3,53 @@ package ru.inversion.f2.print;
 import ru.inversion.f2.prepared.F2StyledDocument;
 import ru.inversion.utils.Checks;
 
-import javax.print.PrintService;
-import javax.print.attribute.HashPrintRequestAttributeSet;
-import javax.print.attribute.PrintRequestAttributeSet;
+import java.util.function.IntSupplier;
 
+/**
+ * Создаёт F2PrintJob из уже подготовленного документа
+ * и уже разрешённого F2PrintPageSetup.
+ *
+ * Не отвечает за:
+ * - выбор принтера;
+ * - разрешение PageFormat;
+ * - расчёт printable area;
+ * - подготовку документа;
+ * - запуск печати.
+ */
 public final class F2PrintJobFactory {
 
-    private final F2PrinterMan printerMan;
-    private final F2PrintPageSetupResolver pageSetupResolver;
 
-    public F2PrintJobFactory(
-            F2PrinterMan printerMan
-    ) {
-        this(
-                printerMan,
-                new F2PrintPageSetupResolver()
+    private final F2PrinterMan printerMan;
+
+    /** */
+    public F2PrintJobFactory( F2PrinterMan printerMan )
+    {
+        this.printerMan = Checks.Require.object( printerMan, "printerMan" );
+    }
+
+    /** */
+    public F2PrintJob create ( F2StyledDocument document, F2PrintPageSetup pageSetup, IntSupplier copiesSupplier, F2PrintListener listener )
+    {
+        Checks.Require.object( document, "document" );
+        Checks.Require.object( pageSetup, "pageSetup" );
+
+        String printerName = pageSetup.printService().getName();
+
+        String driverRef   = printerMan.driverRef( printerName );
+
+        return new F2PrintJob (
+            document, pageSetup, driverRef, copiesSupplier, listener
         );
     }
 
-    F2PrintJobFactory(
-            F2PrinterMan printerMan,
-            F2PrintPageSetupResolver pageSetupResolver
-    ) {
-        this.printerMan =
-                Checks.Require.object(
-                        printerMan,
-                        "printerMan"
-                );
-
-        this.pageSetupResolver =
-                Checks.Require.object(
-                        pageSetupResolver,
-                        "pageSetupResolver"
-                );
-    }
-
+    /** */
     public F2PrintJob create(
             F2StyledDocument document,
-            PrintService printService,
-            PrintRequestAttributeSet documentAttributes,
+            F2PrintPageSetup pageSetup,
+            int copies,
             F2PrintListener listener
-    ) throws Exception {
-
-        Checks.Require.object(
-                document,
-                "document"
-        );
-
-        Checks.Require.object(
-                printService,
-                "printService"
-        );
-
-        PrintRequestAttributeSet attributes =
-                documentAttributes == null
-                        ? new HashPrintRequestAttributeSet()
-                        : new HashPrintRequestAttributeSet(
-                        documentAttributes
-                );
-
-        String printerName =
-                printService.getName();
-
-        boolean matrixPrinter =
-                printerMan.isMatrixPrinter(
-                        printerName
-                );
-
-        String driverRef =
-                printerMan.driverRef(
-                        printerName
-                );
-
-        F2PrintPageSetup pageSetup =
-                pageSetupResolver.resolve(
-                        new F2PrintSettings(
-                                printService,
-                                attributes
-                        ),
-                        matrixPrinter
-                );
-
-        return new F2PrintJob(
-                document,
-                pageSetup,
-                driverRef,
-                () -> F2PrintService.resolveCopies(
-                        attributes
-                ),
-                listener
-        );
+    ) {
+        return create( document, pageSetup, () -> copies, listener );
     }
 }
+

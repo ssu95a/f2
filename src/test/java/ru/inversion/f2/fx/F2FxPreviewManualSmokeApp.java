@@ -23,6 +23,7 @@ import ru.inversion.f2.print.F2PrintPageSetup;
 import ru.inversion.f2.print.F2PrintPageSetupResolver;
 import ru.inversion.f2.print.F2PrintService;
 import ru.inversion.f2.print.F2PrintSettings;
+import ru.inversion.f2.print.F2PrintJobFactory;
 
 import javax.print.PrintService;
 import javax.print.attribute.HashPrintRequestAttributeSet;
@@ -76,6 +77,12 @@ public class F2FxPreviewManualSmokeApp extends Application {
             PreviewState state
     ) {
 
+        F2PrintJobFactory printJobFactory =
+                new F2PrintJobFactory(
+                        F2Runtime.get()
+                                .printerMan()
+                );
+
         ComboBox<PrintService> printerComboBox =
                 newPrinterComboBox(state.pageSetup.printService());
 
@@ -99,23 +106,11 @@ public class F2FxPreviewManualSmokeApp extends Application {
         Button printButton = new Button("Print");
 
         printButton.setOnAction(event -> {
-            F2PrintPageSetup pageSetup =
-                    previewPane.pageSetup();
-
-            String driverRef =
-                    F2Runtime.get()
-                            .printerMan()
-                            .driverRef(
-                                    pageSetup
-                                            .printService()
-                                            .getName()
-                            );
 
             F2PrintJob printJob =
-                    new F2PrintJob(
+                    printJobFactory.create(
                             previewPane.document(),
-                            pageSetup,
-                            driverRef,
+                            previewPane.pageSetup(),
                             () -> state.copyCount,
                             F2PrintListener.NONE
                     );
