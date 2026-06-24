@@ -13,6 +13,7 @@ import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import ru.inversion.f2.F2Runtime;
 import ru.inversion.f2.ini.F2AltIniModelLoader;
 import ru.inversion.f2.prepared.F2StyledDocument;
@@ -254,15 +255,6 @@ public class F2FxPreviewManualSmokeApp extends Application {
         return spinner;
     }
 
-    private String driverRef(F2PrintPageSetup pageSetup) {
-        if (pageSetup == null)
-            return null;
-
-        return F2Runtime.get()
-                .printerMan()
-                .driverRef(pageSetup.printService().getName());
-    }
-
     private void selectPrinter(
             ComboBox<PrintService> comboBox,
             PrintService selectedService
@@ -353,23 +345,45 @@ private PreviewState preparePreview() throws Exception {
     F2StyledDocument document =
             new F2PrintService().prepareDocument(text);
 
-    PrintRequestAttributeSet attributes = F2Runtime.get()
-            .printerMan()
-            .currentPrintSettings()
-            .attributesCopy();
+    PrintRequestAttributeSet attributes =
+            F2Runtime.get()
+                    .printerMan()
+                    .currentPrintSettings()
+                    .attributesCopy();
 
-    PrintService printService = F2Runtime.get()
-            .printerMan()
-            .currentPrintService();
+    PrintService printService =
+            F2Runtime.get()
+                    .printerMan()
+                    .currentPrintService();
 
+    if (printService == null) {
+        throw new IllegalStateException(
+                "Принтер не выбран"
+        );
+    }
+
+    boolean matrixPrinter =
+            F2Runtime.get()
+                    .printerMan()
+                    .isMatrixPrinter(
+                            printService.getName()
+                    );
+
+    F2PrintPageSetup setup =
+            pageSetupResolver.resolve(
+                    new F2PrintSettings(
+                            printService,
+                            attributes
+                    ),
+                    matrixPrinter
+            );
 
     return new PreviewState(
             document,
             setup,
             attributes,
-            F2PrintService.resolveCopies(attributes)
-    );
-}
+            F2PrintService.resolveCopies(attributes));
+    }
 
 
 private static void applyPrintableAreaOverride() {
