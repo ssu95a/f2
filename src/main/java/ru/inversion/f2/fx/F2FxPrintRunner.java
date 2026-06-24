@@ -38,7 +38,7 @@ public final class F2FxPrintRunner {
     }
 
     /** */
-    private static void showPrintError( Window owner, Throwable error )
+    public static void showPrintError( Window owner, Throwable error )
     {
         Alert alert = new Alert(Alert.AlertType.ERROR);
 

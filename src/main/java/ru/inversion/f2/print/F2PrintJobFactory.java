@@ -44,10 +44,7 @@ public final class F2PrintJobFactory {
 
     /** */
     public F2PrintJob create(
-            F2StyledDocument document,
-            F2PrintPageSetup pageSetup,
-            int copies,
-            F2PrintListener listener
+        F2StyledDocument document, F2PrintPageSetup pageSetup, int copies, F2PrintListener listener
     ) {
         return create( document, pageSetup, () -> copies, listener );
     }

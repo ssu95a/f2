@@ -33,6 +33,9 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static ru.inversion.f2.fx.F2FxPrintRunner.showPrintError;
 
 public class F2FxPreviewManualSmokeApp extends Application {
 
@@ -72,6 +75,32 @@ public class F2FxPreviewManualSmokeApp extends Application {
         stage.show();
     }
 
+    private F2PrintPageSetup resolvePageSetup(
+            PrintService printService,
+            PrintRequestAttributeSet documentAttributes
+    ) throws Exception {
+        if (printService == null) {
+            throw new IllegalArgumentException(
+                    "printService is null"
+            );
+        }
+
+        boolean matrixPrinter =
+                F2Runtime.get()
+                        .printerMan()
+                        .isMatrixPrinter(
+                                printService.getName()
+                        );
+
+        return pageSetupResolver.resolve(
+                new F2PrintSettings(
+                        printService,
+                        documentAttributes
+                ),
+                matrixPrinter
+        );
+    }
+
     private HBox newToolbar(
             F2FxPreviewPane previewPane,
             PreviewState state
@@ -93,8 +122,70 @@ public class F2FxPreviewManualSmokeApp extends Application {
                 printerCaption(state.pageSetup.printService())
         );
 
-        printerComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
-        });
+        AtomicBoolean printerChanging = new AtomicBoolean(false);
+
+        printerComboBox
+                .valueProperty()
+                .addListener(
+                        (observable, oldPrinter, newPrinter) -> {
+                            if (printerChanging.get())
+                                return;
+
+                            if (newPrinter == null)
+                                return;
+
+                            if (samePrinter(oldPrinter, newPrinter))
+                                return;
+
+                            try {
+                                /*
+                                 * Меняется только устройство вывода.
+                                 * state.attributes остаются параметрами документа.
+                                 */
+                                F2PrintPageSetup newSetup =
+                                        resolvePageSetup(
+                                                newPrinter,
+                                                state.attributes
+                                        );
+
+                                state.pageSetup =
+                                        newSetup;
+
+                                previewPane.setPageSetup(
+                                        newSetup
+                                );
+
+                                printerLabel.setText(
+                                        printerCaption(newPrinter)
+                                );
+                            }
+                            catch (Throwable error) {
+                                /*
+                                 * Новый принтер не смог принять параметры
+                                 * документа. Возвращаем прежний выбор.
+                                 */
+                                printerChanging.set(true);
+
+                                try {
+                                    printerComboBox.setValue(
+                                            oldPrinter
+                                    );
+                                }
+                                finally {
+                                    printerChanging.set(false);
+                                }
+
+                                showPrintError(
+                                        printerComboBox.getScene() == null
+                                                ? null
+                                                : printerComboBox
+                                                .getScene()
+                                                .getWindow(),
+                                        error
+                                );
+                            }
+                        }
+                );
 
         copiesSpinner.valueProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue == null)
@@ -364,13 +455,19 @@ private PreviewState preparePreview() throws Exception {
                             printService.getName()
                     );
 
+//    F2PrintPageSetup setup =
+//            pageSetupResolver.resolve(
+//                    new F2PrintSettings(
+//                            printService,
+//                            attributes
+//                    ),
+//                    matrixPrinter
+//            );
+
     F2PrintPageSetup setup =
-            pageSetupResolver.resolve(
-                    new F2PrintSettings(
-                            printService,
-                            attributes
-                    ),
-                    matrixPrinter
+            resolvePageSetup(
+                    printService,
+                    attributes
             );
 
     return new PreviewState(
