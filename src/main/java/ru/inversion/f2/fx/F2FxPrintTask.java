@@ -1,59 +1,60 @@
 package ru.inversion.f2.fx;
 
 import javafx.concurrent.Task;
-import javafx.concurrent.Worker;
-import ru.inversion.f2.print.F2PrintJob;
-import ru.inversion.f2.print.F2PrintListener;
-import ru.inversion.f2.print.F2PrintResult;
-import ru.inversion.f2.print.F2PrintService;
+import ru.inversion.f2.print.*;
+import ru.inversion.utils.Checks;
 
-public final class F2FxPrintTask
-        extends Task<F2PrintResult>
-        implements F2PrintListener {
-
-    private final F2PrintService printService;
-    private final F2PrintJob printJob;
+public final class F2FxPrintTask extends Task<F2PrintResult> implements F2PrintListener
+{
+    private final F2PrintJob      printJob;
     private final F2PrintListener delegate;
+    private final F2PrintExecutor printExecutor;
 
     public F2FxPrintTask(F2PrintJob printJob) {
-        this(
-                new F2PrintService(),
-                printJob
-        );
+        this( new F2PrintService()::print, printJob );
     }
 
-    F2FxPrintTask(
-            F2PrintService printService,
-            F2PrintJob sourcePrintJob
-    ) {
-        if (printService == null)
-            throw new IllegalArgumentException("printService is null");
-
-        if (sourcePrintJob == null)
-            throw new IllegalArgumentException("sourcePrintJob is null");
-
-        this.printService = printService;
-        this.delegate = sourcePrintJob.listener();
-        this.printJob = sourcePrintJob.withListener(this);
-
-        stateProperty().addListener((observable, oldState, newState) -> {
-            if (newState == Worker.State.CANCELLED)
-                this.printJob.cancel();
-        });
+    F2FxPrintTask( F2PrintExecutor printExecutor, F2PrintJob sourcePrintJob )
+    {
+        this.printExecutor = Checks.Require.object(printExecutor, "printExecutor");
+        this.delegate      = sourcePrintJob.listener();
+        this.printJob      = F2PrintJobs.withListener( Checks.Require.object(sourcePrintJob, "sourcePrintJob"), this );
     }
 
     @Override
     protected F2PrintResult call() throws Exception {
-        updateTitle("F2 print");
-        updateMessage("Подготовка задания печати");
+
+        updateTitle   ("F2 print");
+        updateMessage ("Подготовка задания печати");
         updateProgress(0, pageCount());
 
-        return printService.print(printJob);
+        try {
+
+            F2PrintResult result = printExecutor.print(printJob);
+
+            if( super.isCancelled() || printJob.isCancelled() )
+                return null;
+
+            return result;
+        }
+        catch (Exception ex) {
+            if (super.isCancelled() || printJob.isCancelled())
+                return null;
+            throw ex;
+        }
     }
 
     public void cancelPrint() {
         updateMessage("Отмена печати");
+
         printJob.cancel();
+
+        /*
+         * Отдельно переводим JavaFX Task в CANCELLED.
+         * false: не прерываем поток принудительно,
+         * PrinterJob останавливается через F2PrintCancellation.
+         */
+        super.cancel(false);
     }
 
     public F2PrintJob printJob() {
@@ -140,16 +141,10 @@ public final class F2FxPrintTask
             );
         }
 
-        delegate.onFinalPrint(
-                printJob,
-                ex
-        );
+        delegate.onFinalPrint( printJob, ex );
     }
 
     private int pageCount() {
-        return Math.max(
-                1,
-                printJob.pageCount()
-        );
+        return Math.max( 1, printJob.pageCount() );
     }
 }

@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 
+/** Low-level модель параметров из AltPrnt5.ini */
 public final class F2MapAltIniModel implements F2AltIniModel {
 
     private final Map<String, String> commands;
@@ -15,15 +16,16 @@ public final class F2MapAltIniModel implements F2AltIniModel {
     private final Map<String, String> driverRef;
 
     public F2MapAltIniModel(
-            Map<String, String> commands,
-            Map<String, String> codeText,
-            Map<String, String> codeGraphics,
-            Map<String, String> driverRef
-    ) {
-        this.commands = cleanCommandMap(commands);
-        this.codeText = cleanCommandMap(codeText);
+        Map<String, String> commands,
+        Map<String, String> codeText,
+        Map<String, String> codeGraphics,
+        Map<String, String> driverRef
+    )
+    {
+        this.commands     = cleanCommandMap(commands);
+        this.codeText     = cleanCommandMap(codeText);
         this.codeGraphics = cleanCommandMap(codeGraphics);
-        this.driverRef = cleanCommandMap(driverRef);
+        this.driverRef    = cleanCommandMap(driverRef);
     }
 
     @Override
@@ -112,8 +114,13 @@ public final class F2MapAltIniModel implements F2AltIniModel {
 
         Map< String, String > result = new LinkedHashMap<>();
 
-        for( Map.Entry<String, String> e : source.entrySet() ) {
-             result.put(cleanName(e.getKey()), e.getValue());
+        for( Map.Entry<String, String> e : source.entrySet() )
+        {
+             String k = cleanName( e.getKey()  );
+             String v = cleanName( e.getValue());
+
+             if( S.isNotNullOrEmpty(k) && S.isNotNullOrEmpty(v) )
+                 result.put( k, v );
         }
 
         return Collections.unmodifiableMap(result);

@@ -80,11 +80,11 @@ public final class F2PrinterMan {
         return instance != null;
     }
 
-    public PrintService[] printServices() {
+    public static PrintService[] printServices() {
         return PrintServiceLookup.lookupPrintServices(null, null);
     }
 
-    public PrintService defaultPrintService() {
+    public static PrintService defaultPrintService() {
         return PrintServiceLookup.lookupDefaultPrintService();
     }
 
@@ -116,7 +116,8 @@ public final class F2PrinterMan {
     /**
      * printerNo — 1-based.
      */
-    public void selectPrinterNo(int printerNo) {
+    public void selectPrinterNo( int printerNo )
+    {
 
         PrintService[] services = printServices();
 
