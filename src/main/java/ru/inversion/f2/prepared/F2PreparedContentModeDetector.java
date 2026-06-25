@@ -60,7 +60,7 @@ public final class F2PreparedContentModeDetector {
     /** */
     private boolean hasFormatting( F2CommandCall call, F2CommandRegistry registry )
     {
-        return hasFormatting( call, registry, new HashSet<String>() );
+        return hasFormatting( call, registry, new HashSet<>() );
     }
 
     private boolean hasFormatting(F2CommandCall call, F2CommandRegistry registry, Set<String> visited )
@@ -98,7 +98,7 @@ public final class F2PreparedContentModeDetector {
             {
                 F2CommandCall nested = pv.valueAs( F2CommandCall.class, null );
 
-                if( hasFormatting(nested, registry, visited) )
+                if( hasFormatting( nested, registry, visited ) )
                     return true;
             }
         }

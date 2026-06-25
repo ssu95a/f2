@@ -8,27 +8,16 @@ public final class F2PrintJob {
 
     private final F2StyledDocument document;
     private final F2PrintPageSetup pageSetup;
-    private final String driverRef;
-    private final IntSupplier copiesSupplier;
-    private final Integer resolvedCopies;
-    private final F2PrintListener listener;
-    private final F2PrintCancellation cancellation;
+    private final String           driverRef;
+    private final IntSupplier      copiesSupplier;
+    private final Integer          resolvedCopies;
+    private final F2PrintListener  listener;
+    private final F2PrintCancellation
+                                   cancellation;
 
-    public F2PrintJob(
-            F2StyledDocument document,
-            F2PrintPageSetup pageSetup,
-            String driverRef,
-            IntSupplier copiesSupplier,
-            F2PrintListener listener
-    ) {
-        this(
-                document,
-                pageSetup,
-                driverRef,
-                copiesSupplier,
-                listener,
-                new F2PrintCancellation()
-        );
+    public F2PrintJob( F2StyledDocument document, F2PrintPageSetup pageSetup, String driverRef, IntSupplier copiesSupplier, F2PrintListener listener )
+    {
+        this( document, pageSetup, driverRef, copiesSupplier, listener, new F2PrintCancellation() );
     }
 
     public F2PrintJob(
