@@ -15,8 +15,6 @@ public final class F2AwtPagePainter {
 
     private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-    private static final double DEFAULT_MIN_CONTENT_SCALE = 0.80d;
-
     private static final double DEFAULT_WARN_CONTENT_SCALE = 0.95d;
 
     private static final double PT_TO_MM = 25.4d / 72.0d;
@@ -36,6 +34,9 @@ public final class F2AwtPagePainter {
     }
 
     private final F2AwtLineRenderer lineRenderer = new F2AwtLineRenderer();
+
+    private final F2AwtContentScaleResolver contentScaleResolver =
+            new F2AwtContentScaleResolver();
 
     /** */
     public void paint( Graphics2D g, F2StyledPage page, F2AwtPageRenderConfig config )
@@ -105,17 +106,53 @@ public final class F2AwtPagePainter {
         PageContentMetrics metrics =
                 measurePageContent(g, page);
 
-        double widthFitScale = fitScale(metrics.widthPt, config.imageableWidthPt());
-        double heightFitScale = fitScale(metrics.heightPt, config.imageableHeightPt());
-        double metricsFitScale = Math.min(widthFitScale, heightFitScale);
-        double requestedScale = Math.min(configuredScale, metricsFitScale);
-        double resultScale = Math.max(requestedScale, DEFAULT_MIN_CONTENT_SCALE);
+        F2AwtContentScaleResolver.Result widthScale =
+                contentScaleResolver.resolveWidthScale(
+                        metrics.widthPt,
+                        config
+                );
 
-        double overflowWidthPt = overflowPt(metrics.widthPt, config.imageableWidthPt());
-        double overflowHeightPt = overflowPt(metrics.heightPt, config.imageableHeightPt());
+        double resultScale =
+                widthScale.finalScale();
 
-        boolean onePageFit = requestedScale >= DEFAULT_MIN_CONTENT_SCALE;
-        boolean shrinkRequired = metricsFitScale < configuredScale;
+        double widthFitScale =
+                widthScale.widthFitScale();
+
+        double heightFitScale =
+                fitScale(
+                        metrics.heightPt,
+                        config.imageableHeightPt()
+                );
+
+        double requestedScale =
+                widthScale.requestedScale();
+
+        double scaledWidthPt =
+                metrics.widthPt
+                        * resultScale;
+
+        double scaledHeightPt =
+                metrics.heightPt
+                        * resultScale;
+
+        double overflowWidthPt =
+                overflowPt(
+                        scaledWidthPt,
+                        config.imageableWidthPt()
+                );
+
+        double overflowHeightPt =
+                overflowPt(
+                        scaledHeightPt,
+                        config.imageableHeightPt()
+                );
+
+        boolean onePageFit =
+                overflowWidthPt <= 0.0d
+                        && overflowHeightPt <= 0.0d;
+
+        boolean shrinkRequired =
+                widthScale.shrinkRequired();
 
         logOnePageFitDiagnostics(
                 onePageFit,
@@ -149,7 +186,7 @@ public final class F2AwtPagePainter {
     ) {
         if (resultScale < DEFAULT_WARN_CONTENT_SCALE || !onePageFit) {
             log.warn(
-                    "F2 page one-page fit diagnostics: onePageFit={}, shrinkRequired={}, content={}x{} pt, imageable={}x{} pt, overflow={}x{} pt, overflowMm={}x{}, fitScaleWidth={}, fitScaleHeight={}, configuredScale={}, requestedScale={}, finalScale={}, warnContentScale={}, minContentScale={}",
+                    "F2 page one-page fit diagnostics: onePageFit={}, shrinkRequired={}, content={}x{} pt, imageable={}x{} pt, overflow={}x{} pt, overflowMm={}x{}, fitScaleWidth={}, fitScaleHeight={}, configuredScale={}, requestedScale={}, finalScale={}, warnContentScale={}",
                     onePageFit,
                     shrinkRequired,
                     metrics.widthPt,
@@ -165,8 +202,7 @@ public final class F2AwtPagePainter {
                     configuredScale,
                     requestedScale,
                     resultScale,
-                    DEFAULT_WARN_CONTENT_SCALE,
-                    DEFAULT_MIN_CONTENT_SCALE
+                    DEFAULT_WARN_CONTENT_SCALE
             );
         }
         else {
