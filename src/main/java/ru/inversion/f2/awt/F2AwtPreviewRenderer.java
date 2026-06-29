@@ -1,6 +1,7 @@
 package ru.inversion.f2.awt;
 
 import ru.inversion.f2.prepared.F2StyledPage;
+import ru.inversion.f2.print.F2PhysicalPage;
 import ru.inversion.f2.print.F2PrintPageSetup;
 import ru.inversion.utils.Checks;
 
@@ -23,6 +24,28 @@ public final class F2AwtPreviewRenderer {
     public BufferedImage render ( F2StyledPage page, F2PrintPageSetup pageSetup, double dpi, boolean debugOverlay )
     {
         return render( page, F2AwtPageRenderConfig.fromPrintPageSetup( pageSetup, page, dpi, debugOverlay ).withShrinkToFit(true) );
+    }
+
+    /** */
+    public BufferedImage render( F2PhysicalPage page, F2PrintPageSetup pageSetup )
+    {
+        return render(page, pageSetup, 144.0d, false);
+    }
+
+    /** */
+    public BufferedImage render( F2PhysicalPage page, F2PrintPageSetup pageSetup, double dpi, boolean debugOverlay )
+    {
+        Checks.Require.object(page, "page");
+
+        F2StyledPage styledPage = page.asStyledPage();
+
+        F2AwtPageRenderConfig config =
+                F2AwtPageRenderConfig
+                        .fromPrintPageSetup(pageSetup, styledPage, dpi, debugOverlay)
+                        .withContentScale(page.contentScale())
+                        .withShrinkToFit(false);
+
+        return render(styledPage, config);
     }
 
 

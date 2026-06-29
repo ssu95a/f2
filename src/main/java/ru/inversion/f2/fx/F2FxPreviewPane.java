@@ -7,6 +7,7 @@ import javafx.scene.layout.BorderPane;
 import ru.inversion.f2.awt.F2AwtDocumentPaginator;
 import ru.inversion.f2.awt.F2AwtPreviewRenderer;
 import ru.inversion.f2.prepared.F2StyledDocument;
+import ru.inversion.f2.print.F2PageLayout;
 import ru.inversion.f2.print.F2PrintPageSetup;
 import ru.inversion.utils.Checks;
 
@@ -22,8 +23,8 @@ public final class F2FxPreviewPane extends BorderPane {
     private final ImageView imageView = new ImageView();
     private final ScrollPane scrollPane = new ScrollPane(imageView);
 
-    private F2StyledDocument sourceDocument;
     private F2StyledDocument document;
+    private F2PageLayout pageLayout;
     private F2PrintPageSetup pageSetup;
     private int pageIndex;
     private double dpi = DEFAULT_DPI;
@@ -45,9 +46,9 @@ public final class F2FxPreviewPane extends BorderPane {
             F2StyledDocument document,
             F2PrintPageSetup pageSetup
     ) {
-        this.sourceDocument = Checks.Require.object(document, "document");
+        this.document = Checks.Require.object(document, "document");
         this.pageSetup = Checks.Require.object(pageSetup, "pageSetup");
-        this.document = paginator.paginate(sourceDocument, pageSetup);
+        this.pageLayout = paginator.layout(document, pageSetup);
         this.pageIndex = 0;
         renderCurrentPage();
     }
@@ -55,11 +56,11 @@ public final class F2FxPreviewPane extends BorderPane {
     public void setPageSetup(F2PrintPageSetup pageSetup) {
         this.pageSetup = Checks.Require.object(pageSetup, "pageSetup");
 
-        if (sourceDocument != null) {
-            this.document = paginator.paginate(sourceDocument, pageSetup);
+        if (document != null) {
+            this.pageLayout = paginator.layout(document, pageSetup);
             this.pageIndex = Math.min(
                     pageIndex,
-                    Math.max(0, document.pageCount() - 1)
+                    Math.max(0, pageLayout.pageCount() - 1)
             );
         }
 
@@ -77,7 +78,7 @@ public final class F2FxPreviewPane extends BorderPane {
     public void nextPage() {
         ensureDocumentReady();
 
-        if (pageIndex + 1 < document.pageCount())
+        if (pageIndex + 1 < pageLayout.pageCount())
             setPageIndex(pageIndex + 1);
     }
 
@@ -105,8 +106,14 @@ public final class F2FxPreviewPane extends BorderPane {
             renderCurrentPage();
     }
 
+    /** Логический документ до привязки к printable area. */
     public F2StyledDocument document() {
         return document;
+    }
+
+    /** Физическая раскладка для текущего принтера. */
+    public F2PageLayout pageLayout() {
+        return pageLayout;
     }
 
     public F2PrintPageSetup pageSetup() {
@@ -122,7 +129,7 @@ public final class F2FxPreviewPane extends BorderPane {
     }
 
     public int pageCount() {
-        return document == null ? 0 : document.pageCount();
+        return pageLayout == null ? 0 : pageLayout.pageCount();
     }
 
     public ImageView imageView() {
@@ -149,7 +156,7 @@ public final class F2FxPreviewPane extends BorderPane {
         checkPageIndex(pageIndex);
 
         BufferedImage image = renderer.render(
-                document.pages().get(pageIndex),
+                pageLayout.page(pageIndex),
                 pageSetup,
                 dpi,
                 debugOverlay
@@ -161,7 +168,7 @@ public final class F2FxPreviewPane extends BorderPane {
     }
 
     private boolean isPreviewReady() {
-        return document != null && pageSetup != null;
+        return pageLayout != null && pageSetup != null;
     }
 
     private void ensureDocumentReady() {
@@ -171,12 +178,12 @@ public final class F2FxPreviewPane extends BorderPane {
         if (pageSetup == null)
             throw new IllegalStateException("pageSetup is not set");
 
-        if (document.isEmpty())
+        if (pageLayout == null || pageLayout.isEmpty())
             throw new IllegalStateException("document has no pages");
     }
 
     private void checkPageIndex(int pageIndex) {
-        if (pageIndex < 0 || pageIndex >= document.pageCount())
+        if (pageIndex < 0 || pageIndex >= pageLayout.pageCount())
             throw new IllegalArgumentException("pageIndex is out of range: " + pageIndex);
     }
 }

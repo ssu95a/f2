@@ -7,6 +7,7 @@ import java.util.function.IntSupplier;
 public final class F2PrintJob {
 
     private final F2StyledDocument document;
+    private final F2PageLayout     pageLayout;
     private final F2PrintPageSetup pageSetup;
     private final String           driverRef;
     private final IntSupplier      copiesSupplier;
@@ -30,6 +31,7 @@ public final class F2PrintJob {
     ) {
         this(
                 document,
+                null,
                 pageSetup,
                 driverRef,
                 copiesSupplier,
@@ -41,6 +43,7 @@ public final class F2PrintJob {
 
     private F2PrintJob(
             F2StyledDocument document,
+            F2PageLayout pageLayout,
             F2PrintPageSetup pageSetup,
             String driverRef,
             IntSupplier copiesSupplier,
@@ -55,6 +58,7 @@ public final class F2PrintJob {
             throw new IllegalArgumentException("pageSetup is null");
 
         this.document = document;
+        this.pageLayout = pageLayout;
         this.pageSetup = pageSetup;
         this.driverRef = driverRef;
         this.copiesSupplier =
@@ -101,6 +105,7 @@ public final class F2PrintJob {
 
         return new F2PrintJob(
             document,
+            pageLayout,
             pageSetup,
             driverRef,
             () -> safeCopies,
@@ -115,6 +120,23 @@ public final class F2PrintJob {
     ) {
         return new F2PrintJob(
                 document,
+                pageLayout,
+                pageSetup,
+                driverRef,
+                copiesSupplier,
+                resolvedCopies,
+                listener,
+                cancellation
+        );
+    }
+
+    F2PrintJob withPageLayout(F2PageLayout pageLayout) {
+        if (pageLayout == null)
+            throw new IllegalArgumentException("pageLayout is null");
+
+        return new F2PrintJob(
+                document,
+                pageLayout,
                 pageSetup,
                 driverRef,
                 copiesSupplier,
@@ -157,8 +179,20 @@ public final class F2PrintJob {
         return resolvedCopies.intValue();
     }
 
+    /** Логический документ до привязки к printable area. */
     public F2StyledDocument document() {
         return document;
+    }
+
+    public boolean hasPageLayout() {
+        return pageLayout != null;
+    }
+
+    public F2PageLayout pageLayout() {
+        if (pageLayout == null)
+            throw new IllegalStateException("page layout is not resolved");
+
+        return pageLayout;
     }
 
     public F2PrintPageSetup pageSetup() {
@@ -174,7 +208,9 @@ public final class F2PrintJob {
     }
 
     public int pageCount() {
-        return document.pageCount();
+        return pageLayout == null
+                ? document.pageCount()
+                : pageLayout.pageCount();
     }
 
     public boolean matrixPrinter() {

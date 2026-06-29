@@ -12,17 +12,6 @@ public final class F2PrintJobs {
         if (source == null)
             throw new IllegalArgumentException("source is null");
 
-        F2PrintJob copy = new F2PrintJob(
-                source.document(),
-                source.pageSetup(),
-                source.driverRef(),
-                source::copies,
-                listener,
-                source.cancellation()
-        );
-
-        return source.isCopiesResolved()
-                ? copy.withFixedCopies(source.resolvedCopies())
-                : copy;
+        return source.withListener(listener);
     }
 }
