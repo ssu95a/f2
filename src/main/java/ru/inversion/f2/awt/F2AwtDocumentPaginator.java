@@ -24,6 +24,8 @@ public final class F2AwtDocumentPaginator {
 
         private static final double EPSILON_PT = 0.01d;
         private final F2AwtLineRenderer lineRenderer = new F2AwtLineRenderer();
+        private final F2AwtContentScaleResolver contentScaleResolver =
+                new F2AwtContentScaleResolver();
 
         public F2StyledDocument paginate(
                 F2StyledDocument document,
@@ -95,7 +97,8 @@ public final class F2AwtDocumentPaginator {
                                     sourcePage,
                                     72.0d,
                                     false
-                            );
+                            )
+                            .withShrinkToFit(true);
 
             double availableHeightPt =
                     config.imageableHeightPt();
@@ -106,18 +109,56 @@ public final class F2AwtDocumentPaginator {
             double usedHeightPt =
                     0.0d;
 
+            double maxRightPt =
+                    0.0d;
+
             for (F2StyledLine line
                     : sourcePage.lines()) {
-                double lineHeightPt =
-                        lineHeightPt(
+                F2AwtLineMetrics metrics =
+                        lineRenderer.measure(
                                 graphics,
                                 line
                         );
 
+                double lineHeightPt =
+                        Math.max(
+                                line.lineStepPt(),
+                                metrics.heightPt()
+                        );
+
+                double lineRightPt =
+                        Math.max(
+                                0.0d,
+                                line.leftIndentPt()
+                                        + metrics.widthPt()
+                        );
+
+                double candidateHeightPt =
+                        usedHeightPt
+                                + lineHeightPt;
+
+                double candidateRightPt =
+                        Math.max(
+                                maxRightPt,
+                                lineRightPt
+                        );
+
+                double candidateScale =
+                        contentScaleResolver
+                                .resolveWidthScale(
+                                        candidateRightPt,
+                                        config
+                                )
+                                .finalScale();
+
+                /*
+                 * Painter применяет тот же width scale ко всему содержимому
+                 * страницы, поэтому сравниваем уже масштабированную высоту.
+                 */
                 boolean pageOverflow =
                         !currentLines.isEmpty()
-                                && usedHeightPt
-                                + lineHeightPt
+                                && candidateHeightPt
+                                * candidateScale
                                 > availableHeightPt
                                 + EPSILON_PT;
 
@@ -134,6 +175,9 @@ public final class F2AwtDocumentPaginator {
 
                     usedHeightPt =
                             0.0d;
+
+                    maxRightPt =
+                            0.0d;
                 }
 
                 currentLines.add(
@@ -142,6 +186,12 @@ public final class F2AwtDocumentPaginator {
 
                 usedHeightPt +=
                         lineHeightPt;
+
+                maxRightPt =
+                        Math.max(
+                                maxRightPt,
+                                lineRightPt
+                        );
             }
 
             /*
@@ -156,22 +206,6 @@ public final class F2AwtDocumentPaginator {
                         )
                 );
             }
-        }
-
-        private double lineHeightPt(
-                Graphics2D graphics,
-                F2StyledLine line
-        ) {
-            F2AwtLineMetrics metrics =
-                    lineRenderer.measure(
-                            graphics,
-                            line
-                    );
-
-            return Math.max(
-                    line.lineStepPt(),
-                    metrics.heightPt()
-            );
         }
 
         private static void configureGraphics(

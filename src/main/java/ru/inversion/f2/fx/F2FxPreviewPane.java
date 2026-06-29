@@ -4,6 +4,7 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import ru.inversion.f2.awt.F2AwtDocumentPaginator;
 import ru.inversion.f2.awt.F2AwtPreviewRenderer;
 import ru.inversion.f2.prepared.F2StyledDocument;
 import ru.inversion.f2.print.F2PrintPageSetup;
@@ -15,10 +16,13 @@ public final class F2FxPreviewPane extends BorderPane {
 
     private static final double DEFAULT_DPI = 144.0d;
 
+    private final F2AwtDocumentPaginator paginator =
+            new F2AwtDocumentPaginator();
     private final F2AwtPreviewRenderer renderer = new F2AwtPreviewRenderer();
     private final ImageView imageView = new ImageView();
     private final ScrollPane scrollPane = new ScrollPane(imageView);
 
+    private F2StyledDocument sourceDocument;
     private F2StyledDocument document;
     private F2PrintPageSetup pageSetup;
     private int pageIndex;
@@ -41,14 +45,23 @@ public final class F2FxPreviewPane extends BorderPane {
             F2StyledDocument document,
             F2PrintPageSetup pageSetup
     ) {
-        this.document = Checks.Require.object(document, "document");
+        this.sourceDocument = Checks.Require.object(document, "document");
         this.pageSetup = Checks.Require.object(pageSetup, "pageSetup");
+        this.document = paginator.paginate(sourceDocument, pageSetup);
         this.pageIndex = 0;
         renderCurrentPage();
     }
 
     public void setPageSetup(F2PrintPageSetup pageSetup) {
         this.pageSetup = Checks.Require.object(pageSetup, "pageSetup");
+
+        if (sourceDocument != null) {
+            this.document = paginator.paginate(sourceDocument, pageSetup);
+            this.pageIndex = Math.min(
+                    pageIndex,
+                    Math.max(0, document.pageCount() - 1)
+            );
+        }
 
         if (isPreviewReady())
             renderCurrentPage();

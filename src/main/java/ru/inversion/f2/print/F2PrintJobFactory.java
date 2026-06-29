@@ -1,5 +1,6 @@
 package ru.inversion.f2.print;
 
+import ru.inversion.f2.awt.F2AwtDocumentPaginator;
 import ru.inversion.f2.prepared.F2StyledDocument;
 import ru.inversion.utils.Checks;
 
@@ -18,6 +19,8 @@ import java.util.function.IntSupplier;
  */
 public final class F2PrintJobFactory {
 
+    private final F2AwtDocumentPaginator paginator =
+            new F2AwtDocumentPaginator();
 
     private final F2PrinterMan printerMan;
 
@@ -37,8 +40,14 @@ public final class F2PrintJobFactory {
 
         String driverRef   = printerMan.driverRef( printerName );
 
+        F2StyledDocument physicalDocument =
+                paginator.paginate(
+                        document,
+                        pageSetup
+                );
+
         return new F2PrintJob (
-            document, pageSetup, driverRef, copiesSupplier, listener
+            physicalDocument, pageSetup, driverRef, copiesSupplier, listener
         );
     }
 
