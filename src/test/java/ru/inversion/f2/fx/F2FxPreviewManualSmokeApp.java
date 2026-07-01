@@ -18,6 +18,7 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import ru.inversion.f2.F2Runtime;
+import ru.inversion.f2.awt.F2AwtDocumentPaginator;
 import ru.inversion.f2.command.F2CommandRegistry;
 import ru.inversion.f2.ini.F2AltIniModelLoader;
 import ru.inversion.f2.prepared.F2PreparedContentMode;
@@ -71,7 +72,7 @@ import static ru.inversion.f2.fx.F2FxPrintRunner.showPrintError;
 public class F2FxPreviewManualSmokeApp extends Application {
 
     private static final String DEFAULT_INPUT_FILE =
-            "d:\\Java\\Projects\\f2\\src\\test\\cus02.DAT";
+            "d:\\Java\\Projects\\f2\\src\\test-data\\406000.dat";
 
     private static final String DEFAULT_INI_FILE =
             "d:\\Java\\Projects\\f2\\src\\test\\ALTPRNT5.INI";
@@ -93,6 +94,9 @@ public class F2FxPreviewManualSmokeApp extends Application {
 
     private final F2PreparedTextInterpreter documentInterpreter =
             new F2PreparedTextInterpreter();
+
+    private final F2AwtDocumentPaginator documentPaginator =
+            new F2AwtDocumentPaginator();
 
     @Override
     public void start(Stage stage) throws Exception {
@@ -226,8 +230,25 @@ public class F2FxPreviewManualSmokeApp extends Application {
                                                 state.attributes
                                         );
 
+                                F2StyledDocument newDocument =
+                                        documentPaginator.paginate(
+                                                state.logicalDocument,
+                                                newSetup
+                                        );
+
                                 state.pageSetup = newSetup;
-                                previewPane.setPageSetup(newSetup);
+                                state.document = newDocument;
+
+                                refreshPreview(
+                                        previewPane,
+                                        state.document,
+                                        state.pageSetup,
+                                        previousButton,
+                                        nextButton,
+                                        pageLabel,
+                                        previewPane.pageIndex()
+                                );
+
                                 printerLabel.setText(
                                         printerCaption(newPrinter)
                                 );
@@ -289,7 +310,12 @@ public class F2FxPreviewManualSmokeApp extends Application {
                                                 state.attributes
                                         );
 
-                                applyLoadedSource(state, loaded);
+                                applyLoadedSource(
+                                        state,
+                                        loaded,
+                                        newSetup
+                                );
+
                                 state.charset = newCharset;
                                 state.pageSetup = newSetup;
 
@@ -606,13 +632,23 @@ public class F2FxPreviewManualSmokeApp extends Application {
                         loaded.styledDocument
                 );
 
+        F2StyledDocument logicalDocument =
+                loaded.styledDocument;
+
+        F2StyledDocument document =
+                documentPaginator.paginate(
+                        logicalDocument,
+                        setup
+                );
+
         return new PreviewState(
                 inputPath,
                 textCharset,
                 loaded.preparedDocument,
                 loaded.contentMode,
                 loaded.styledDocument,
-                loaded.styledDocument,
+                logicalDocument,
+                document,
                 setup,
                 attributes,
                 F2PrintService.resolveCopies(attributes),
@@ -676,52 +712,78 @@ public class F2FxPreviewManualSmokeApp extends Application {
 
     private void applyLoadedSource(
             PreviewState state,
-            LoadedSource loaded
+            LoadedSource loaded,
+            F2PrintPageSetup pageSetup
     ) {
         if (loaded == null)
             throw new IllegalArgumentException("loaded is null");
 
-        state.preparedDocument = loaded.preparedDocument;
-        state.contentMode = loaded.contentMode;
-        state.baseDocument = loaded.styledDocument;
+        F2StyledDocument logicalDocument;
+        String plainFontFamily = state.plainFontFamily;
+        int plainFontSize = state.plainFontSize;
 
-        if (state.plainFontEditable()
+        boolean plainFontEditable =
+                loaded.contentMode == F2PreparedContentMode.PLAIN
+                        || loaded.contentMode
+                        == F2PreparedContentMode.PLAIN_WITH_HEADER;
+
+        if (plainFontEditable
                 && state.plainFontOverrideActive) {
-            state.document =
+            logicalDocument =
                     applyPlainFontOverride(
-                            state.baseDocument,
-                            state.plainFontFamily,
-                            state.plainFontSize
+                            loaded.styledDocument,
+                            plainFontFamily,
+                            plainFontSize
                     );
         }
         else {
-            state.document = state.baseDocument;
+            logicalDocument = loaded.styledDocument;
 
-            if (state.plainFontEditable()) {
+            if (plainFontEditable) {
                 FontDefaults defaults =
                         detectFontDefaults(
-                                state.baseDocument
+                                loaded.styledDocument
                         );
 
-                state.plainFontFamily = defaults.family;
-                state.plainFontSize = defaults.size;
+                plainFontFamily = defaults.family;
+                plainFontSize = defaults.size;
             }
         }
+
+        F2StyledDocument document =
+                documentPaginator.paginate(
+                        logicalDocument,
+                        pageSetup
+                );
+
+        state.preparedDocument = loaded.preparedDocument;
+        state.contentMode = loaded.contentMode;
+        state.baseDocument = loaded.styledDocument;
+        state.logicalDocument = logicalDocument;
+        state.document = document;
+        state.plainFontFamily = plainFontFamily;
+        state.plainFontSize = plainFontSize;
     }
 
     private void rebuildPlainDocument(
             PreviewState state
     ) {
         if (!state.plainFontEditable()) {
-            state.document = state.baseDocument;
-            return;
+            state.logicalDocument = state.baseDocument;
+        }
+        else {
+            state.logicalDocument =
+                    applyPlainFontOverride(
+                            state.baseDocument,
+                            state.plainFontFamily,
+                            state.plainFontSize
+                    );
         }
 
         state.document =
-                applyPlainFontOverride(
-                        state.baseDocument,
-                        state.plainFontFamily,
-                        state.plainFontSize
+                documentPaginator.paginate(
+                        state.logicalDocument,
+                        state.pageSetup
                 );
     }
 
@@ -1258,6 +1320,7 @@ public class F2FxPreviewManualSmokeApp extends Application {
         private F2PreparedContentMode contentMode;
 
         private F2StyledDocument baseDocument;
+        private F2StyledDocument logicalDocument;
         private F2StyledDocument document;
 
         private F2PrintPageSetup pageSetup;
@@ -1275,6 +1338,7 @@ public class F2FxPreviewManualSmokeApp extends Application {
                 F2PreparedDocument preparedDocument,
                 F2PreparedContentMode contentMode,
                 F2StyledDocument baseDocument,
+                F2StyledDocument logicalDocument,
                 F2StyledDocument document,
                 F2PrintPageSetup pageSetup,
                 PrintRequestAttributeSet attributes,
@@ -1287,6 +1351,7 @@ public class F2FxPreviewManualSmokeApp extends Application {
             this.preparedDocument = preparedDocument;
             this.contentMode = contentMode;
             this.baseDocument = baseDocument;
+            this.logicalDocument = logicalDocument;
             this.document = document;
             this.pageSetup = pageSetup;
             this.attributes =
